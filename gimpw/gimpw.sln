@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gimpw", "gimpw\gimpw.vcxproj", "{3B820138-7C7C-4009-9C3B-0E7496A880B9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Debug|x64.ActiveCfg = Debug|x64
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Debug|x64.Build.0 = Debug|x64
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Debug|x86.ActiveCfg = Debug|Win32
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Debug|x86.Build.0 = Debug|Win32
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Release|x64.ActiveCfg = Release|x64
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Release|x64.Build.0 = Release|x64
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Release|x86.ActiveCfg = Release|Win32
+		{3B820138-7C7C-4009-9C3B-0E7496A880B9}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {58C6FF99-ABC4-48DF-AA05-D9E817DD21B7}
+	EndGlobalSection
+EndGlobal
