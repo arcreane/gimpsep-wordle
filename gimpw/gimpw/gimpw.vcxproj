@@ -19,7 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Functions Face detect &amp; dilate erose\functions_fdetection_dilateErose.cpp" />
+    <ClCompile Include="Functions Face detect &amp; dilate erose\main_fdetection_dilateErose.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Functions Face detect &amp; dilate erose\functions_fdetection_dilateErose.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_frontalcatface.xml" />
+    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_frontalface_alt.xml" />
+    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_smile.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -18,5 +18,27 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Functions Face detect &amp; dilate erose\functions_fdetection_dilateErose.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Functions Face detect &amp; dilate erose\main_fdetection_dilateErose.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Functions Face detect &amp; dilate erose\functions_fdetection_dilateErose.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_frontalcatface.xml">
+      <Filter>Source Files</Filter>
+    </Xml>
+    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_frontalface_alt.xml">
+      <Filter>Source Files</Filter>
+    </Xml>
+    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_smile.xml">
+      <Filter>Source Files</Filter>
+    </Xml>
   </ItemGroup>
 </Project>
