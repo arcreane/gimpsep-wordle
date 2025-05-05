@@ -19,17 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Functions Face detect &amp; dilate erose\functions_fdetection_dilateErose.cpp" />
-    <ClCompile Include="Functions Face detect &amp; dilate erose\main_fdetection_dilateErose.cpp" />
+    <ClCompile Include="canny_edge_detector.cpp" />
+    <ClCompile Include="detection_and_morphology.cpp" />
+    <ClCompile Include="face_detection.cpp" />
+    <ClCompile Include="image_morphology.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Functions Face detect &amp; dilate erose\functions_fdetection_dilateErose.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_frontalcatface.xml" />
-    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_frontalface_alt.xml" />
-    <Xml Include="Functions Face detect &amp; dilate erose\data\haarcascades\haarcascade_smile.xml" />
+    <ClInclude Include="canny_edge_detector.h" />
+    <ClInclude Include="detection_and_morphology.h" />
+    <ClInclude Include="face_detection.h" />
+    <ClInclude Include="image_morphology.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
