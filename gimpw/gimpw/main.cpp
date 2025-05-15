@@ -2,43 +2,43 @@
 #include "canny_edge_detector.h"
 #include <iostream>
 
-using namespace std;
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include "image_resize.h"
 
 int main() {
-    char choice;
+	std::string imagePath;
+	std::cout << "=== Resize Image Program ===\n";
 
-    cout << "==== MAIN MENU ====\n";
-    cout << "1 - Face wDetection & Morphology Module\n";
-    cout << "2 - Face Recognition (Not available)\n";
-	cout << "3 - Canny Edge Detection\n";
-    cout << "Your choice: ";
-    cin >> choice;
+	// 1. Demander le chemin de l’image
+	std::cout << "Enter the image path: ";
+	std::cin >> imagePath;
 
-    switch (choice) {
-    case '1':
-        runDetectionDilate();
-        break;
-
-        // case '2':
-        //     runRecognition(); // Disabled until opencv_contrib is installed
-        //     break;
-
-	case '3': {
-		CannyEdgeDetector detector;
-		string imagePath;
-
-		cout << "Enter the path of the image you want to detect the edges: ";
-		cin >> imagePath;
-
-        detector.loadImage(imagePath);
-		detector.manipulateImage();
-        break;
+	// 2. Charger l’image
+	cv::Mat input = cv::imread(imagePath);
+	if (input.empty()) {
+		std::cerr << "Error: Could not load image from " << imagePath << "\n";
+		return 1;
 	}
 
-    default:
-        cout << "Invalid choice." << endl;
-        break;
-    }
+	// 3. Demander les facteurs de redimensionnement
+	double fx, fy;
+	std::cout << "Enter width scale factor (fx): ";
+	std::cin >> fx;
+	std::cout << "Enter height scale factor (fy): ";
+	std::cin >> fy;
 
-    return 0;
+	// 4. Redimensionner l’image avec ta fonction
+	ImageResizer resizer;
+	cv::Mat resized = resizer.resize(input, fx, fy);
+
+	// 5. Afficher le résultat
+	cv::imshow("Resized Image", resized);
+	cv::waitKey(0);
+
+	// 6. Sauvegarder l’image redimensionnée
+	//cv::imwrite("resized_output.jpg", resized);
+	//std::cout << "Image saved as 'resized_output.jpg'.\n";
+
+	return 0;
 }
