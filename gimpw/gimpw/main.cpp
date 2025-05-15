@@ -47,37 +47,26 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
+#include <QSlider>
 #include <QWidget>
 #include <QFileDialog>
 #include <QPixmap>
 #include <QImage>
+#include <QStackedWidget>
+#include <QSpacerItem>
 #include <opencv2/opencv.hpp>
 
-#include "detection_and_morphology.h"
 #include "canny_edge_detector.h"
-
-QImage matToQImage(const cv::Mat& mat) {
-    if (mat.type() == CV_8UC3) {
-        return QImage(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_RGB888).rgbSwapped();
-    }
-    else if (mat.type() == CV_8UC1) {
-        return QImage(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_Grayscale8);
-    }
-    return QImage();
-}
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
 
-    // 🌈 Style
     QString style = R"(
         QWidget {
             background-color: #f0f0f0;
             font-family: Segoe UI;
             font-size: 16px;
         }
-
         QPushButton {
             padding: 10px;
             font-weight: bold;
@@ -85,20 +74,48 @@ int main(int argc, char* argv[]) {
             background-color: #3498db;
             color: white;
         }
-
         QPushButton:hover {
             background-color: #2980b9;
         }
-
         QLabel {
             color: #333;
+        }
+        QLabel#TitleLabel {
+            font-size: 32px;
+            font-weight: bold;
+            padding: 20px;
         }
     )";
     app.setStyleSheet(style);
 
-    // 🪟 Fenêtre
     QWidget window;
-    window.setWindowTitle("Traitement d'images - OpenCV + Qt");
+    window.setWindowTitle("Traitement d'images - Qt");
+
+    QStackedWidget* stackedWidget = new QStackedWidget;
+
+    // ==== Page d'accueil ====
+    QWidget* homePage = new QWidget;
+    QVBoxLayout* homeLayout = new QVBoxLayout;
+    QLabel* titleLabel = new QLabel("Menu Principal");
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setObjectName("TitleLabel");
+
+    QPushButton* goToCanny = new QPushButton("🔍 Canny Edge Detection");
+    QPushButton* goToDetection = new QPushButton("🧬 Détection + Morphologie");
+
+    QSpacerItem* spacerTop = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QSpacerItem* spacerBottom = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    homeLayout->addWidget(titleLabel);
+    homeLayout->addItem(spacerTop);
+    homeLayout->addWidget(goToCanny);
+    homeLayout->addWidget(goToDetection);
+    homeLayout->addItem(spacerBottom);
+    homePage->setLayout(homeLayout);
+
+    // ==== Page Canny ====
+    QWidget* cannyPage = new QWidget;
+    QVBoxLayout* mainLayout = new QVBoxLayout;
 
     QLabel* imageLabel = new QLabel;
     imageLabel->setAlignment(Qt::AlignCenter);
@@ -109,84 +126,100 @@ int main(int argc, char* argv[]) {
     statusLabel->setAlignment(Qt::AlignCenter);
 
     QPushButton* loadButton = new QPushButton("📁 Charger une image");
-    QPushButton* runDetectionButton = new QPushButton("🔍 Détection + Morphologie");
-    QPushButton* runCannyButton = new QPushButton("🧠 Canny Edge");
+    QPushButton* saveButton = new QPushButton("💾 Sauvegarder l'image");
+    QPushButton* backButton = new QPushButton("⬅️ Retour au menu");
 
-    cv::Mat currentImage;
+    QSlider* sliderT1 = new QSlider(Qt::Horizontal);
+    QSlider* sliderT2 = new QSlider(Qt::Horizontal);
+    sliderT1->setRange(0, 255);
+    sliderT1->setValue(50);
+    sliderT2->setRange(0, 255);
+    sliderT2->setValue(150);
 
-    // 📥 Charger image
+    QLabel* t1Label = new QLabel("Seuil 1 : 50");
+    QLabel* t2Label = new QLabel("Seuil 2 : 150");
+
+    CannyEdgeDetector detector;
+
+    auto updateCanny = [&]() {
+        detector.setThresholds(sliderT1->value(), sliderT2->value());
+        detector.detectEdges();
+        imageLabel->setPixmap(QPixmap::fromImage(detector.getPreview()).scaled(imageLabel->size(), Qt::KeepAspectRatio));
+        statusLabel->setText("🔄 Mise à jour auto : seuils " + QString::number(sliderT1->value()) + ", " + QString::number(sliderT2->value()));
+    };
+
     QObject::connect(loadButton, &QPushButton::clicked, [&]() {
         QString fileName = QFileDialog::getOpenFileName(&window, "Choisir une image", "", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!fileName.isEmpty()) {
-            currentImage = cv::imread(fileName.toStdString());
-            if (!currentImage.empty()) {
-                QImage qimg = matToQImage(currentImage);
-                imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-                statusLabel->setText("✅ Image chargée");
-            }
-            else {
-                statusLabel->setText("❌ Échec du chargement");
-            }
+            CannyEdgeDetector newDetector(fileName.toStdString(), sliderT1->value(), sliderT2->value());
+            detector = newDetector;
+            imageLabel->setPixmap(QPixmap::fromImage(QImage(fileName).scaled(imageLabel->size(), Qt::KeepAspectRatio)));
+            statusLabel->setText("✅ Image chargée (affichage original)");
         }
-        });
+    });
 
-    // 🧪 Détection + Morphologie
-    QObject::connect(runDetectionButton, &QPushButton::clicked, [&]() {
-        if (!currentImage.empty()) {
-            cv::imwrite("temp_gui_input.jpg", currentImage);
-            runDetectionDilate(); // lit "temp_gui_input.jpg", écrit "temp_gui_output.jpg"
-            cv::Mat result = cv::imread("temp_gui_output.jpg");
-            if (!result.empty()) {
-                imageLabel->setPixmap(QPixmap::fromImage(matToQImage(result)).scaled(imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-                statusLabel->setText("✅ Détection + Morphologie appliquée");
-            }
-            else {
-                statusLabel->setText("❌ Erreur : image de sortie manquante");
-            }
+    QObject::connect(sliderT1, &QSlider::valueChanged, [&](int value) {
+        t1Label->setText("Seuil 1 : " + QString::number(value));
+        updateCanny();
+    });
+
+    QObject::connect(sliderT2, &QSlider::valueChanged, [&](int value) {
+        t2Label->setText("Seuil 2 : " + QString::number(value));
+        updateCanny();
+    });
+
+    QObject::connect(saveButton, &QPushButton::clicked, [&]() {
+        QString filePath = QFileDialog::getSaveFileName(&window, "Enregistrer l'image", "", "Images (*.png *.jpg *.bmp)");
+        if (!filePath.isEmpty() && detector.saveImage(filePath.toStdString())) {
+            statusLabel->setText("💾 Image sauvegardée avec succès");
         }
-        else {
-            statusLabel->setText("⚠️ Veuillez charger une image d'abord");
-        }
-        });
+    });
 
-    // 🧠 Canny
-    QObject::connect(runCannyButton, &QPushButton::clicked, [&]() {
-        if (!currentImage.empty()) {
-            CannyEdgeDetector detector;
-            cv::imwrite("canny_gui_input.jpg", currentImage);
-            detector.loadImage("canny_gui_input.jpg");
-            detector.manipulateImage();
-            cv::Mat result = cv::imread("canny_output.jpg");
-            if (!result.empty()) {
-                imageLabel->setPixmap(QPixmap::fromImage(matToQImage(result)).scaled(imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-                statusLabel->setText("✅ Canny appliqué");
-            }
-            else {
-                statusLabel->setText("❌ Erreur : image de sortie manquante");
-            }
-        }
-        else {
-            statusLabel->setText("⚠️ Veuillez charger une image d'abord");
-        }
-        });
+    QObject::connect(backButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentIndex(0);
+    });
 
-    // 🧱 Layouts
-    QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->setContentsMargins(30, 30, 30, 30);
-    mainLayout->setSpacing(15);
-
-    QHBoxLayout* topButtons = new QHBoxLayout;
-    topButtons->addWidget(runDetectionButton);
-    topButtons->addWidget(runCannyButton);
-
-    mainLayout->addLayout(topButtons);
+    mainLayout->addWidget(backButton);
+    mainLayout->addWidget(loadButton);
+    mainLayout->addWidget(saveButton);
+    mainLayout->addWidget(t1Label);
+    mainLayout->addWidget(sliderT1);
+    mainLayout->addWidget(t2Label);
+    mainLayout->addWidget(sliderT2);
     mainLayout->addWidget(imageLabel);
     mainLayout->addWidget(statusLabel);
-    mainLayout->addWidget(loadButton);
+    cannyPage->setLayout(mainLayout);
 
-    window.setLayout(mainLayout);
+    // ==== Page Détection + Morphologie ====
+    QWidget* detectionPage = new QWidget;
+    QVBoxLayout* detectionLayout = new QVBoxLayout;
+    QLabel* detectionLabel = new QLabel("Module Détection + Morphologie à implémenter");
+    detectionLabel->setAlignment(Qt::AlignCenter);
+    QPushButton* returnButton = new QPushButton("⬅️ Retour au menu");
+
+    QObject::connect(returnButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentIndex(0);
+    });
+
+    detectionLayout->addWidget(detectionLabel);
+    detectionLayout->addWidget(returnButton);
+    detectionPage->setLayout(detectionLayout);
+
+    stackedWidget->addWidget(homePage);     
+    stackedWidget->addWidget(cannyPage);    
+    stackedWidget->addWidget(detectionPage);
+
+    QObject::connect(goToCanny, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentIndex(1);
+    });
+
+    QObject::connect(goToDetection, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentIndex(2);
+    });
+
+    window.setLayout(new QVBoxLayout);
+    window.layout()->addWidget(stackedWidget);
     window.showMaximized();
 
     return app.exec();
 }
-

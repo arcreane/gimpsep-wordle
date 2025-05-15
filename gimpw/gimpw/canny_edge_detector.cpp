@@ -1,67 +1,43 @@
 #include "canny_edge_detector.h"
 
-CannyEdgeDetector::CannyEdgeDetector(double t1, double t2)
-	: threshold1(t1), threshold2(t2) {
-};
-
-bool CannyEdgeDetector::loadImage(const string& imageName) {
-	image = imread(imageName, IMREAD_GRAYSCALE);
-	if (image.empty()) {
-		cerr << "Error: Could not open or find the image!" << endl;
-		return false;
-	}
-	return true;
-};
-
-void CannyEdgeDetector::detectEdges() {
-	Canny(image, edges, threshold1, threshold2);
+CannyEdgeDetector::CannyEdgeDetector(const string& path, int t1, int t2)
+    : threshold1(t1), threshold2(t2)
+{
+    if (!path.empty()) {
+        loadImage(path);
+    }
 }
 
-Mat CannyEdgeDetector::getEdges() {
-	return edges;
-};
+bool CannyEdgeDetector::loadImage(const string& path) {
+    image = imread(path);
 
-void onTrackbarChange(int, void* userdata) {
-	auto* detector = static_cast<CannyEdgeDetector*>(userdata);
-	detector->detectEdges();
-	cv::imshow("Canny Edges", detector->getEdges());
+    if (image.empty()) {
+        cerr << "Error: Could not open or find the image!" << endl;
+        return false;
+    }
+    
+    return true;
 }
 
-void CannyEdgeDetector::manipulateImage() {
-	int t1 = static_cast<int>(threshold1);
-	int t2 = static_cast<int>(threshold2);
-
-	cv::namedWindow("Canny Edges", cv::WINDOW_AUTOSIZE);
-
-	cv::createTrackbar("Threshold 1", "Canny Edges", &t1, 500, onTrackbarChange, this);
-	cv::createTrackbar("Threshold 2", "Canny Edges", &t2, 500, onTrackbarChange, this);
-
-	detectEdges();
-	cv::imshow("Canny Edges", edges);
-
-	while (true) {
-		int key = cv::waitKey(30);
-		if (key == 's') {
-			std::string outputPath;
-			std::cout << "Enter the path of the output image : ";
-			std::cin >> outputPath;
-			saveEdges(outputPath);
-			std::cout << "Image saved.\n";
-		}
-		else if (key == 27 || key == 'q') { 
-			break;
-		}
-
-		threshold1 = static_cast<double>(cv::getTrackbarPos("Threshold 1", "Canny Edges"));
-		threshold2 = static_cast<double>(cv::getTrackbarPos("Threshold 2", "Canny Edges"));
-
-		detectEdges();
-		cv::imshow("Canny Edges", edges);
-	}
-
-	cv::destroyWindow("Canny Edges");
+void CannyEdgeDetector::setThresholds(int t1, int t2) {
+    threshold1 = t1;
+    threshold2 = t2;
 }
 
-void CannyEdgeDetector::saveEdges(const string& output) {
-	imwrite(output, edges);
+Mat CannyEdgeDetector::detectEdges() {
+    if (image.empty()) return Mat();
+    Mat gray;
+    cvtColor(image, gray, COLOR_BGR2GRAY);
+    Canny(gray, edges, threshold1, threshold2);
+    return edges;
+}
+
+bool CannyEdgeDetector::saveImage(const string& path) {
+    if (edges.empty()) return false;
+    return imwrite(path, edges);
+}
+
+QImage CannyEdgeDetector::getPreview() const {
+    if (edges.empty()) return QImage();
+    return QImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8).copy();
 }
