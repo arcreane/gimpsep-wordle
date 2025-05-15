@@ -1,16 +1,15 @@
 #include "detection_and_morphology.h"
 #include "canny_edge_detector.h"
-#include <iostream>
-
-using namespace std;
+#include "background_detector.h" 
 
 int main() {
     char choice;
 
     cout << "==== MAIN MENU ====\n";
-    cout << "1 - Face wDetection & Morphology Module\n";
+    cout << "1 - Face Detection & Morphology Module\n";
     cout << "2 - Face Recognition (Not available)\n";
-	cout << "3 - Canny Edge Detection\n";
+    cout << "3 - Canny Edge Detection\n";
+    cout << "4 - Background Separation\n"; 
     cout << "Your choice: ";
     cin >> choice;
 
@@ -23,17 +22,23 @@ int main() {
         //     runRecognition(); // Disabled until opencv_contrib is installed
         //     break;
 
-	case '3': {
-		CannyEdgeDetector detector;
-		string imagePath;
+    case '3': {
+        CannyEdgeDetector detector;
+        string imagePath;
 
-		cout << "Enter the path of the image you want to detect the edges: ";
-		cin >> imagePath;
+        cout << "Enter the path of the image you want to detect the edges: ";
+        cin >> imagePath;
 
-        detector.loadImage(imagePath);
-		detector.manipulateImage();
+        if (detector.loadImage(imagePath)) {
+            detector.manipulateImage();
+        }
         break;
-	}
+    }
+
+    case '4': {
+        runBackgroundDetection(); 
+        break;
+    }
 
     default:
         cout << "Invalid choice." << endl;

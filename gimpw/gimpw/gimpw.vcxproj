@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="background_detector.cpp" />
     <ClCompile Include="canny_edge_detector.cpp" />
     <ClCompile Include="detection_and_morphology.cpp" />
     <ClCompile Include="face_detection.cpp" />
@@ -26,6 +27,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="background_detector.h" />
     <ClInclude Include="canny_edge_detector.h" />
     <ClInclude Include="detection_and_morphology.h" />
     <ClInclude Include="face_detection.h" />
@@ -34,7 +36,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{3b820138-7c7c-4009-9c3b-0e7496a880b9}</ProjectGuid>
+    <ProjectGuid>{9690D5BE-4C77-3A03-80CE-93836EABADFB}</ProjectGuid>
     <RootNamespace>gimpw</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
