@@ -2,24 +2,31 @@
 #define BACKGROUND_DETECTOR_H
 
 #include <opencv2/opencv.hpp>
-#include <iostream>
+#include <QString>
+#include <QImage>
+#include <QPoint>
+#include <QRect>
 
-using namespace std;
 using namespace cv;
+using namespace std;
 
 class BackgroundDetector {
     private:
-        Mat resultMask;
+        Mat image, resultMask;
+        Rect selectedRect;
 
     public:
         BackgroundDetector();
 
-        void apply(const Mat& image, const Rect& rect);
-        Mat getForeground(const Mat& image) const;
-        Mat& getMaskRef();
-        void saveForegroundAsPNG(const Mat& originalImage, const string& outputPath) const;
-};
+        bool loadImage(const QString& path);
+        QImage getOriginalQImage() const;
+        QImage getResultQImage() const;
 
-void runBackgroundDetection();
+        void setSelection(const QPoint& p1, const QPoint& p2);
+        void apply();
+        bool saveResult(const QString& path) const;
+
+        QRect computeAutoSelection() const;
+};
 
 #endif 
