@@ -15,6 +15,7 @@
 
 #include "canny_edge_detector.h"
 #include "background_detector.h"
+#include "image_resize.h"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -61,6 +62,8 @@ int main(int argc, char* argv[]) {
     QPushButton* goToCanny = new QPushButton("🔍 Canny Edge Detection");
     QPushButton* goToDetection = new QPushButton("🧬 Detection + Morphology");
     QPushButton* goToBackground = new QPushButton("🖼️ Background Detection");
+    QPushButton* goToResizing = new QPushButton("↔️ Image Resizing");
+
 
     QSpacerItem* spacerTop = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
     QSpacerItem* spacerBottom = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -70,8 +73,10 @@ int main(int argc, char* argv[]) {
     homeLayout->addWidget(goToCanny);
     homeLayout->addWidget(goToDetection);
     homeLayout->addWidget(goToBackground);
+    homeLayout->addWidget(goToResizing);
     homeLayout->addItem(spacerBottom);
     homePage->setLayout(homeLayout);
+
 
     // ==== Canny Edge Detection Page ====
     QWidget* cannyPage = new QWidget;
@@ -236,11 +241,88 @@ int main(int argc, char* argv[]) {
     });
 
 
+        // ==== Page Image Resizing ====
+    QWidget* resizePage = new QWidget;
+    QVBoxLayout* resizeLayout = new QVBoxLayout;
+
+    QLabel* resizeImageLabel = new QLabel;
+    resizeImageLabel->setAlignment(Qt::AlignCenter);
+    resizeImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
+    resizeImageLabel->setMinimumSize(600, 400);
+
+    QLabel* resizeStatusLabel = new QLabel("No image loaded");
+    resizeStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* resizeLoadButton = new QPushButton("📁 Upload Image");
+    QPushButton* resizeSaveButton = new QPushButton("💾 Save Image");
+    QPushButton* resizeBackButton = new QPushButton("⬅️ Return to menu");
+
+    QSlider* resizeSlider = new QSlider(Qt::Horizontal);
+    resizeSlider->setRange(10, 300); // 0.1x à 3.0x
+    resizeSlider->setValue(100);     // 1.0x par défaut
+    QLabel* scaleLabel = new QLabel("Scale: 1.0x");
+
+    double scaleFactor = 1.0;
+    ImageResizer imageResizer;
+
+    auto updateResizeImage = [&]() {
+        std::cout << "[DEBUG] scaleFactor = " << scaleFactor << std::endl;
+        imageResizer.resize(scaleFactor);
+        resizeImageLabel->setPixmap(QPixmap::fromImage(imageResizer.getQImage()));
+        scaleLabel->setText("Scale: " + QString::number(scaleFactor, 'f', 2) + "x");
+        resizeStatusLabel->setText("🔄 Resize applied");
+    };
+
+    QObject::connect(resizeLoadButton, &QPushButton::clicked, [&]() {
+        QString fileName = QFileDialog::getOpenFileName(&window, "Select an image", "", "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (!fileName.isEmpty()) {
+            cv::Mat img = cv::imread(fileName.toStdString());
+
+            if (!img.empty()) {
+                imageResizer.setImage(img);
+                scaleFactor = 1.0;
+                resizeSlider->setValue(100);
+                updateResizeImage();
+                resizeStatusLabel->setText("✅ Image loaded");
+            }
+        }
+    });
+
+    QObject::connect(resizeSlider, &QSlider::valueChanged, [&](int value) {
+        scaleFactor = value / 100.0;
+        imageResizer.setScaleFactor(scaleFactor);
+        updateResizeImage();
+    });
+
+    QObject::connect(resizeSaveButton, &QPushButton::clicked, [&]() {
+        QString filePath = QFileDialog::getSaveFileName(&window, "Save image", "", "Images (*.png *.jpg *.bmp)");
+        if (!filePath.isEmpty()) {
+            cv::imwrite(filePath.toStdString(), imageResizer.getResizedMat());
+            resizeStatusLabel->setText("💾 Image saved!");
+        }
+    });
+
+    QObject::connect(resizeBackButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentWidget(homePage);
+    });
+
+    resizeLayout->addWidget(resizeBackButton);
+    resizeLayout->addWidget(resizeLoadButton);
+    resizeLayout->addWidget(resizeSaveButton);
+    resizeLayout->addWidget(scaleLabel);
+    resizeLayout->addWidget(resizeSlider);
+    resizeLayout->addWidget(resizeImageLabel);
+    resizeLayout->addWidget(resizeStatusLabel);
+    resizePage->setLayout(resizeLayout);
+
+
     // ==== Add pages to the Home Page ====
-    stackedWidget->addWidget(homePage);
-    stackedWidget->addWidget(cannyPage);
-    stackedWidget->addWidget(detectionPage);
-    stackedWidget->addWidget(backgroundPage);
+    stackedWidget->addWidget(homePage);         // index 0 (for the QObject::connect after)
+    stackedWidget->addWidget(cannyPage);        // index 1
+    stackedWidget->addWidget(detectionPage);    // index 2
+    stackedWidget->addWidget(backgroundPage);   // index 3
+    stackedWidget->addWidget(resizePage);       // index 4
+
 
     QObject::connect(goToCanny, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(1);
@@ -253,6 +335,11 @@ int main(int argc, char* argv[]) {
     QObject::connect(goToBackground, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(3);
     });
+
+    QObject::connect(goToResizing, &QPushButton::clicked, [&]() {
+    stackedWidget->setCurrentIndex(4);
+});
+
 
     window.setLayout(new QVBoxLayout);
     window.layout()->addWidget(stackedWidget);
