@@ -8,4 +8,6 @@ void detectFacesCats(cv::Mat& image,
     cv::CascadeClassifier& smile_cascade,
     cv::CascadeClassifier& cat_cascade);
 
+cv::Mat applyDetection(const cv::Mat& input);
+
 #endif

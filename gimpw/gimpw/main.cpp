@@ -16,6 +16,8 @@
 #include "canny_edge_detector.h"
 #include "background_detector.h"
 #include "image_resize.h"
+#include "image_morphology.h"
+#include "face_detection.h"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -60,10 +62,10 @@ int main(int argc, char* argv[]) {
     titleLabel->setObjectName("TitleLabel");
 
     QPushButton* goToCanny = new QPushButton("🔍 Canny Edge Detection");
-    QPushButton* goToDetection = new QPushButton("🧬 Detection + Morphology");
+    QPushButton* goToMorphology = new QPushButton("🧬 Morphology");
     QPushButton* goToBackground = new QPushButton("🖼️ Background Detection");
     QPushButton* goToResizing = new QPushButton("↔️ Image Resizing");
-
+    QPushButton* goToFaceDetection = new QPushButton("😊 Face Detection");
 
     QSpacerItem* spacerTop = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
     QSpacerItem* spacerBottom = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -71,12 +73,12 @@ int main(int argc, char* argv[]) {
     homeLayout->addWidget(titleLabel);
     homeLayout->addItem(spacerTop);
     homeLayout->addWidget(goToCanny);
-    homeLayout->addWidget(goToDetection);
+    homeLayout->addWidget(goToMorphology);
     homeLayout->addWidget(goToBackground);
     homeLayout->addWidget(goToResizing);
+    homeLayout->addWidget(goToFaceDetection);
     homeLayout->addItem(spacerBottom);
     homePage->setLayout(homeLayout);
-
 
     // ==== Canny Edge Detection Page ====
     QWidget* cannyPage = new QWidget;
@@ -155,20 +157,80 @@ int main(int argc, char* argv[]) {
     cannyLayout->addWidget(statusLabel);
     cannyPage->setLayout(cannyLayout);
 
-    // ==== Detection + Morphology Page ====
-    QWidget* detectionPage = new QWidget;
-    QVBoxLayout* detectionLayout = new QVBoxLayout;
-    QLabel* detectionLabel = new QLabel("Detection + Morphology to implement");
-    detectionLabel->setAlignment(Qt::AlignCenter);
-    QPushButton* returnButton = new QPushButton("⬅️ Return to menu");
+    // ==== Morphology Page ====
+    QWidget* morphologyPage = new QWidget;
+    QVBoxLayout* morphologyLayout = new QVBoxLayout;
 
-    QObject::connect(returnButton, &QPushButton::clicked, [&]() {
+    QLabel* morphImageLabel = new QLabel;
+    morphImageLabel->setAlignment(Qt::AlignCenter);
+    morphImageLabel->setMinimumSize(600, 400);
+    morphImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
+
+    QLabel* morphStatusLabel = new QLabel("No image loaded");
+    morphStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* morphLoadButton = new QPushButton("📁 Load image");
+    QPushButton* morphDilateButton = new QPushButton("➕ Apply Dilation");
+    QPushButton* morphErodeButton = new QPushButton("➖ Apply Erosion");
+    QPushButton* morphBackButton = new QPushButton("⬅️ Return to menu");
+
+    QSlider* morphSlider = new QSlider(Qt::Horizontal);
+    morphSlider->setRange(1, 20);
+    morphSlider->setValue(2);
+    QLabel* morphKernelLabel = new QLabel("Kernel size: 2");
+
+    cv::Mat morphOriginalImage;
+    cv::Mat morphResult;
+
+    auto updateMorphology = [&](bool dilate) {
+        if (morphOriginalImage.empty()) {
+            morphStatusLabel->setText("❗ No image loaded");
+            return;
+        }
+        int size = morphSlider->value();
+        morphResult = applyMorphology(morphOriginalImage, size, dilate);
+        QImage qimg((uchar*)morphResult.data, morphResult.cols, morphResult.rows, morphResult.step, QImage::Format_BGR888);
+        morphImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(morphImageLabel->size(), Qt::KeepAspectRatio));
+        morphStatusLabel->setText(dilate ? "✅ Dilation applied" : "✅ Erosion applied");
+        };
+
+    QObject::connect(morphLoadButton, &QPushButton::clicked, [&]() {
+        QString path = QFileDialog::getOpenFileName(&window, "Load image", "", "Images (*.png *.jpg *.bmp)");
+        if (!path.isEmpty()) {
+            morphOriginalImage = cv::imread(path.toStdString());
+            if (!morphOriginalImage.empty()) {
+                QImage qimg((uchar*)morphOriginalImage.data, morphOriginalImage.cols, morphOriginalImage.rows, morphOriginalImage.step, QImage::Format_BGR888);
+                morphImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(morphImageLabel->size(), Qt::KeepAspectRatio));
+                morphStatusLabel->setText("✅ Image loaded");
+            }
+            else {
+                morphStatusLabel->setText("❌ Failed to load image");
+            }
+        }
+        });
+
+    QObject::connect(morphDilateButton, &QPushButton::clicked, [&]() {
+        updateMorphology(true);
+        });
+    QObject::connect(morphErodeButton, &QPushButton::clicked, [&]() {
+        updateMorphology(false);
+        });
+    QObject::connect(morphSlider, &QSlider::valueChanged, [&](int value) {
+        morphKernelLabel->setText("Kernel size: " + QString::number(value));
+        });
+    QObject::connect(morphBackButton, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(0);
-    });
+        });
 
-    detectionLayout->addWidget(detectionLabel);
-    detectionLayout->addWidget(returnButton);
-    detectionPage->setLayout(detectionLayout);
+    morphologyLayout->addWidget(morphBackButton);
+    morphologyLayout->addWidget(morphLoadButton);
+    morphologyLayout->addWidget(morphDilateButton);
+    morphologyLayout->addWidget(morphErodeButton);
+    morphologyLayout->addWidget(morphKernelLabel);
+    morphologyLayout->addWidget(morphSlider);
+    morphologyLayout->addWidget(morphImageLabel);
+    morphologyLayout->addWidget(morphStatusLabel);
+    morphologyPage->setLayout(morphologyLayout);
 
     // ==== Background Detection Page ====
     QWidget* backgroundPage = new QWidget;
@@ -315,31 +377,86 @@ int main(int argc, char* argv[]) {
     resizeLayout->addWidget(resizeStatusLabel);
     resizePage->setLayout(resizeLayout);
 
+    // ==== Face Detection Page ====
+    QWidget* facePage = new QWidget;
+    QVBoxLayout* faceLayout = new QVBoxLayout;
+
+    QLabel* faceImageLabel = new QLabel;
+    faceImageLabel->setAlignment(Qt::AlignCenter);
+    faceImageLabel->setMinimumSize(600, 400);
+    faceImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
+
+    QLabel* faceStatusLabel = new QLabel("No image loaded");
+    faceStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* faceLoadButton = new QPushButton("📁 Load image");
+    QPushButton* faceDetectButton = new QPushButton("🔍 Detect faces, smiles and cats");
+    QPushButton* faceBackButton = new QPushButton("⬅️ Return to menu");
+
+    cv::Mat faceOriginalImage;
+    cv::Mat faceDetectedImage;
+
+    QObject::connect(faceLoadButton, &QPushButton::clicked, [&]() {
+        QString path = QFileDialog::getOpenFileName(&window, "Load image", "", "Images (*.png *.jpg *.bmp)");
+        if (!path.isEmpty()) {
+            faceOriginalImage = cv::imread(path.toStdString());
+            if (!faceOriginalImage.empty()) {
+                QImage qimg((uchar*)faceOriginalImage.data, faceOriginalImage.cols, faceOriginalImage.rows, faceOriginalImage.step, QImage::Format_BGR888);
+                faceImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(faceImageLabel->size(), Qt::KeepAspectRatio));
+                faceStatusLabel->setText("✅ Image loaded");
+            }
+            else {
+                faceStatusLabel->setText("❌ Failed to load image");
+            }
+        }
+        });
+
+    QObject::connect(faceDetectButton, &QPushButton::clicked, [&]() {
+        if (!faceOriginalImage.empty()) {
+            faceDetectedImage = applyDetection(faceOriginalImage);
+            QImage qimg((uchar*)faceDetectedImage.data, faceDetectedImage.cols, faceDetectedImage.rows, faceDetectedImage.step, QImage::Format_BGR888);
+            faceImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(faceImageLabel->size(), Qt::KeepAspectRatio));
+            faceStatusLabel->setText("😊 Detection applied");
+        }
+        else {
+            faceStatusLabel->setText("❗ No image loaded");
+        }
+        });
+
+    QObject::connect(faceBackButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentIndex(0);
+        });
+
+    faceLayout->addWidget(faceBackButton);
+    faceLayout->addWidget(faceLoadButton);
+    faceLayout->addWidget(faceDetectButton);
+    faceLayout->addWidget(faceImageLabel);
+    faceLayout->addWidget(faceStatusLabel);
+    facePage->setLayout(faceLayout);
 
     // ==== Add pages to the Home Page ====
-    stackedWidget->addWidget(homePage);         // index 0 (for the QObject::connect after)
+    stackedWidget->addWidget(homePage);         // index 0
     stackedWidget->addWidget(cannyPage);        // index 1
-    stackedWidget->addWidget(detectionPage);    // index 2
+    stackedWidget->addWidget(morphologyPage);   // index 2
     stackedWidget->addWidget(backgroundPage);   // index 3
     stackedWidget->addWidget(resizePage);       // index 4
-
+    stackedWidget->addWidget(facePage);         // index 5
 
     QObject::connect(goToCanny, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(1);
-    });
-
-    QObject::connect(goToDetection, &QPushButton::clicked, [&]() {
+        });
+    QObject::connect(goToMorphology, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(2);
-    });
-
+        });
     QObject::connect(goToBackground, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(3);
-    });
-
+        });
     QObject::connect(goToResizing, &QPushButton::clicked, [&]() {
-    stackedWidget->setCurrentIndex(4);
-});
-
+        stackedWidget->setCurrentIndex(4);
+        });
+    QObject::connect(goToFaceDetection, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentIndex(5);
+        });
 
     window.setLayout(new QVBoxLayout);
     window.layout()->addWidget(stackedWidget);

@@ -163,7 +163,6 @@
   <ItemGroup>
     <ClCompile Include="background_detector.cpp" />
     <ClCompile Include="canny_edge_detector.cpp" />
-    <ClCompile Include="detection_and_morphology.cpp" />
     <ClCompile Include="face_detection.cpp" />
     <ClCompile Include="image_morphology.cpp" />
     <ClCompile Include="image_resize.cpp" />
@@ -172,7 +171,6 @@
   <ItemGroup>
     <ClInclude Include="background_detector.h" />
     <ClInclude Include="canny_edge_detector.h" />
-    <ClInclude Include="detection_and_morphology.h" />
     <ClInclude Include="face_detection.h" />
     <ClInclude Include="image_morphology.h" />
     <ClInclude Include="image_resize.h" />
