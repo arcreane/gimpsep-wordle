@@ -1,4 +1,4 @@
-#include "image_stitcher.h"
+#include "panorama.h"
 
 ImageStitcher::ImageStitcher() {
     stitcher = cv::Stitcher::create(cv::Stitcher::PANORAMA);

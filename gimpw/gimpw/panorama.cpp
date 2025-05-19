@@ -1,4 +1,4 @@
-#include "image_stitcher.h"
+#include "panorama.h"
 #include <opencv2/imgcodecs.hpp>
 
 ImageStitcher::ImageStitcher() {
