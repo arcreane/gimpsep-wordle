@@ -1,0 +1,14 @@
+#include <opencv2/face.hpp>
+#include <iostream>
+
+int main() {
+    try {
+        auto recognizer = cv::face::LBPHFaceRecognizer::create();
+        std::cout << "Module `cv::face` est disponible ?" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Erreur : " << e.what() << std::endl;
+        std::cerr << "Le module `face` n'est probablement pas disponible ?" << std::endl;
+    }
+
+    return 0;
+}

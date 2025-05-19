@@ -3,7 +3,7 @@
 
 #include <opencv2/opencv.hpp>
 
-void detectFacesAndCats(cv::Mat& image,
+void detectFacesCats(cv::Mat& image,
     cv::CascadeClassifier& face_cascade,
     cv::CascadeClassifier& smile_cascade,
     cv::CascadeClassifier& cat_cascade);

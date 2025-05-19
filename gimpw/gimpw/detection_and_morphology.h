@@ -3,15 +3,10 @@
 
 #include <opencv2/opencv.hpp>
 
-cv::Mat morphImage(const cv::Mat& input, int size, bool dilate); // erosion or dilate
+// Appliquer détection (faces, chats, sourires) et retourner l'image modifiée
+cv::Mat applyDetection(const cv::Mat& input);
 
-
-void detectFacesCats(cv::Mat& image, // detect faces, smiles or cats
-    cv::CascadeClassifier& face_cascade,
-    cv::CascadeClassifier& smile_cascade,
-    cv::CascadeClassifier& cat_cascade);
-
-
-void runDetectionDilate(); // my main function 
+// Appliquer morphologie (érosion/dilatation)
+cv::Mat applyMorphologyGUI(const cv::Mat& input, int size, bool dilate);
 
 #endif
