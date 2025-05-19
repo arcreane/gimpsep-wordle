@@ -166,6 +166,7 @@
     <ClCompile Include="detection_and_morphology.cpp" />
     <ClCompile Include="face_detection.cpp" />
     <ClCompile Include="image_morphology.cpp" />
+    <ClCompile Include="image_resize.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -174,6 +175,7 @@
     <ClInclude Include="detection_and_morphology.h" />
     <ClInclude Include="face_detection.h" />
     <ClInclude Include="image_morphology.h" />
+    <ClInclude Include="image_resize.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">
