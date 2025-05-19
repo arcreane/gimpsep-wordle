@@ -1,23 +1,17 @@
-#include "panorama.h"
+#ifndef IMAGE_STITCHER_H
+#define IMAGE_STITCHER_H
 
-ImageStitcher::ImageStitcher() {
-    stitcher = cv::Stitcher::create(cv::Stitcher::PANORAMA);
-}
+#include <opencv2/opencv.hpp>
+#include <opencv2/stitching.hpp>
+#include <QStringList>
 
-bool ImageStitcher::stitchImages(const QStringList& filePaths, cv::Mat& output) {
-    std::vector<cv::Mat> images;
+class ImageStitcher {
+public:
+    ImageStitcher();
+    bool stitchImages(const QStringList& filePaths, cv::Mat& output);
 
-    //upload images from Qt paths
-    for (const QString& path : filePaths) {
-        cv::Mat img = cv::imread(path.toStdString());
-        if (img.empty()) {
-            return false; //error fail
-        }
-        images.push_back(img);
-    }
+private:
+    cv::Ptr<cv::Stitcher> stitcher;
+};
 
-    //do the panorama function 
-    cv::Stitcher::Status status = stitcher->stitch(images, output);
-    return status == cv::Stitcher::OK;
-}
-#pragma once
+#endif 
