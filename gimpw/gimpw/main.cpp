@@ -18,6 +18,8 @@
 #include "image_resize.h"
 #include "image_morphology.h"
 #include "face_detection.h"
+#include "video_manipulation.h"
+
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -66,6 +68,8 @@ int main(int argc, char* argv[]) {
     QPushButton* goToBackground = new QPushButton("🖼️ Background Detection");
     QPushButton* goToResizing = new QPushButton("↔️ Image Resizing");
     QPushButton* goToFaceDetection = new QPushButton("😊 Face Detection");
+    QPushButton* goToVideo = new QPushButton("🎞️ Video Manipulation");
+
 
     QSpacerItem* spacerTop = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
     QSpacerItem* spacerBottom = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -77,6 +81,7 @@ int main(int argc, char* argv[]) {
     homeLayout->addWidget(goToBackground);
     homeLayout->addWidget(goToResizing);
     homeLayout->addWidget(goToFaceDetection);
+    homeLayout->addWidget(goToVideo);
     homeLayout->addItem(spacerBottom);
     homePage->setLayout(homeLayout);
 
@@ -273,7 +278,7 @@ int main(int argc, char* argv[]) {
 
     QObject::connect(bgApplyButton, &QPushButton::clicked, [&]() {
         bgStatusLabel->setText("⏳ Processing background detection...");
-        app.processEvents(); 
+        app.processEvents();
 
         QRect rect = bgDetector.computeAutoSelection();
         if (!rect.isNull()) {
@@ -441,6 +446,9 @@ int main(int argc, char* argv[]) {
     stackedWidget->addWidget(backgroundPage);   // index 3
     stackedWidget->addWidget(resizePage);       // index 4
     stackedWidget->addWidget(facePage);         // index 5
+    VideoManipulation* videoPage = new VideoManipulation;
+    stackedWidget->addWidget(videoPage); // index 6
+
 
     QObject::connect(goToCanny, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(1);
@@ -457,6 +465,10 @@ int main(int argc, char* argv[]) {
     QObject::connect(goToFaceDetection, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(5);
         });
+    QObject::connect(goToVideo, &QPushButton::clicked, [&]() {
+    stackedWidget->setCurrentIndex(6);
+});
+
 
     window.setLayout(new QVBoxLayout);
     window.layout()->addWidget(stackedWidget);
