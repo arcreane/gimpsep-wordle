@@ -11,16 +11,16 @@ using namespace cv;
 class CannyEdgeDetector {
     private:
         Mat image, edges;
-        int threshold1, threshold2;
+        int lowerThreshold, upperThreshold;
 
     public:
-        CannyEdgeDetector(const string& imagePath = "", int t1 = 50, int t2 = 150);
+        CannyEdgeDetector(const string& imagePath = "", int lowerT = 50, int upperT = 150);
 
-        void setThresholds(int t1, int t2);
         bool loadImage(const string& path);
-        bool saveImage(const string& path);
-        Mat detectEdges();
-        QImage getPreview() const;
+        void setThresholds(int lowerT, int upperT);
+        Mat computeEdges();
+        QImage getEdgesImage() const;
+        bool saveEdgesImage(const string& path);
 };
 
 #endif

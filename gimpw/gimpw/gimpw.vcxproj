@@ -161,19 +161,21 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="background_detector.cpp" />
+    <ClCompile Include="background_separator.cpp" />
     <ClCompile Include="canny_edge_detector.cpp" />
     <ClCompile Include="face_detection.cpp" />
     <ClCompile Include="image_morphology.cpp" />
     <ClCompile Include="image_resize.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="video_manipulation.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="background_detector.h" />
+    <ClInclude Include="background_separator.h" />
     <ClInclude Include="canny_edge_detector.h" />
     <ClInclude Include="face_detection.h" />
     <ClInclude Include="image_morphology.h" />
     <ClInclude Include="image_resize.h" />
+    <QtMoc Include="video_manipulation.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">

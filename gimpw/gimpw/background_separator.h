@@ -1,5 +1,5 @@
-#ifndef BACKGROUND_DETECTOR_H
-#define BACKGROUND_DETECTOR_H
+#ifndef BACKGROUND_SEPARATOR_H
+#define BACKGROUND_SEPARATOR_H
 
 #include <opencv2/opencv.hpp>
 #include <QString>
@@ -10,23 +10,21 @@
 using namespace cv;
 using namespace std;
 
-class BackgroundDetector {
+class BackgroundSeparator {
     private:
         Mat image, resultMask;
         Rect selectedRect;
 
     public:
-        BackgroundDetector();
+        BackgroundSeparator();
 
         bool loadImage(const QString& path);
         QImage getOriginalQImage() const;
-        QImage getResultQImage() const;
-
-        void setSelection(const QPoint& p1, const QPoint& p2);
+        void computeAutoSelection();
         void apply();
+        Mat createImageWithAlpha() const;
+        QImage getResultQImage() const;
         bool saveResult(const QString& path) const;
-
-        QRect computeAutoSelection() const;
 };
 
 #endif 
