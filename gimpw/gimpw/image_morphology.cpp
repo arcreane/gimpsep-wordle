@@ -1,6 +1,6 @@
 #include "image_morphology.h"
 
-cv::Mat applyMorphology(const cv::Mat& input, int size, bool dilate)
+cv::Mat Morphology::applyMorphology(const cv::Mat& input, int size, bool dilate)
 {
     cv::Mat output;
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
