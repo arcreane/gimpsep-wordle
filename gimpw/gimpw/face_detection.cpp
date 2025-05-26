@@ -3,10 +3,17 @@
 using namespace cv;
 using namespace std;
 
-void detectFacesCats(Mat& image,
-    CascadeClassifier& face_cascade,
-    CascadeClassifier& smile_cascade,
-    CascadeClassifier& cat_cascade)
+// charge files haar cascades
+bool Detector::loadClassifiers(const string& face_xml,
+    const string& smile_xml,
+    const string& cat_xml) {
+    return face_cascade.load(face_xml) &&
+        smile_cascade.load(smile_xml) &&
+        cat_cascade.load(cat_xml);
+}
+
+// apply detection on faces, smiles and cats
+void Detector::detectFacesCats(Mat& image)
 {
     Mat gray;  // convert the image on grey scale
     cvtColor(image, gray, COLOR_BGR2GRAY);
@@ -31,7 +38,6 @@ void detectFacesCats(Mat& image,
     vector<Rect> cats; //detect if there is cat in the image 
     cat_cascade.detectMultiScale(gray, cats, 1.1, 3, 0, Size(50, 50));
 
-
     for (const Rect& cat : cats) { // if cat detected 
         rectangle(image, cat, Scalar(0, 255, 0), 2);  //draw a rectangular shape around the cat 
         putText(image, "Cat", Point(cat.x, cat.y - 5),  //display 'cat' above 
@@ -39,24 +45,9 @@ void detectFacesCats(Mat& image,
     }
 }
 
-// apply detection on faces, smiles and cats
-cv::Mat applyDetection(const cv::Mat& input) { //detection for smiles, faces and cats
-    //paths for the haar files
-    string face_xml = "data/haarcascades/haarcascade_frontalface_alt.xml";
-    string smile_xml = "data/haarcascades/haarcascade_smile.xml";
-    string cat_xml = "data/haarcascades/haarcascade_frontalcatface.xml";
-
-
-    CascadeClassifier face_cascade, smile_cascade, cat_cascade; //haar classificator file
-    if (!face_cascade.load(face_xml) ||
-        !smile_cascade.load(smile_xml) ||
-        !cat_cascade.load(cat_xml)) {
-        cerr << "error loading haar cascade files" << endl;
-        return input.clone(); // return image not modified in case of an error 
-    }
-
-
+// function calling, and cloning of the original image
+Mat Detector::applyDetection(const Mat& input) {
     Mat image = input.clone(); // do a copy of the image to draw on it 
     detectFacesCats(image, face_cascade, smile_cascade, cat_cascade); //apply detection
-    return image;// return the image modified
+    return image;// return the image modified
 }
