@@ -161,6 +161,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\ConsoleApplication2\ConsoleApplication2\object_detector.cpp" />
     <ClCompile Include="background_separator.cpp" />
     <ClCompile Include="canny_edge_detector.cpp" />
     <ClCompile Include="face_detection.cpp" />
@@ -170,6 +171,7 @@
     <ClCompile Include="video_manipulation.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\ConsoleApplication2\ConsoleApplication2\object_detector.h" />
     <ClInclude Include="background_separator.h" />
     <ClInclude Include="canny_edge_detector.h" />
     <ClInclude Include="face_detection.h" />

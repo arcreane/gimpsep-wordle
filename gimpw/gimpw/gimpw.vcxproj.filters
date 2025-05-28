@@ -30,9 +30,6 @@
     <ClCompile Include="canny_edge_detector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="detection_and_morphology.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="face_detection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,18 +39,36 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="background_separator.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image_resize.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="video_manipulation.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\ConsoleApplication2\ConsoleApplication2\object_detector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="canny_edge_detector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="detection_and_morphology.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="face_detection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="image_morphology.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="background_separator.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image_resize.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\ConsoleApplication2\ConsoleApplication2\object_detector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
