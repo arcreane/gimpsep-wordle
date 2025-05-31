@@ -1,45 +1,32 @@
 #ifndef VIDEO_MANIPULATION_H
 #define VIDEO_MANIPULATION_H
 
-#include <QWidget>
-#include <QLabel>
-#include <QPushButton>
-#include <QSlider>
-#include <QVBoxLayout>
-#include <QTimer>
 #include <opencv2/opencv.hpp>
+#include <QImage>
 
-class VideoManipulation : public QWidget {
-    Q_OBJECT
-
+class VideoManipulation {
 public:
-    explicit VideoManipulation(QWidget *parent = nullptr);
+    bool loadVideo(const std::string& path);
+    bool nextFrame();
+    bool goToFrame(int frameNumber);
+    void setSpeedFactor(double factor);
 
-    private slots:
-        void loadVideo();
-    void updateFrame();
-    void changeFrame(int value);
-    void changeSpeed(int value);
+    QImage getCurrentFrameQImage() const;
+    int getTotalFrames() const;
+    int getCurrentFrame() const;
+    double getSpeedFactor() const;
+
+    bool saveVideo(const std::string& outputPath);
+
 
 private:
-    QLabel *videoLabel;
-    QSlider *frameSlider;
-    QSlider *speedSlider;
-    QLabel* speedLabel;
-    QPushButton *loadButton;
-    QPushButton* playButton;
-    QPushButton* pauseButton;
-    QVBoxLayout *layout;
-    QTimer *timer;
-
     cv::VideoCapture video;
-    int totalFrames;
-    int currentFrame;
-    int frameDelay;
+    cv::Mat currentFrameMat;
+    int totalFrames = 0;
+    int currentFrame = 0;
+    double speedFactor = 1.0;
 
-    void showFrame(int frameNumber);
-    QImage matToQImage(const cv::Mat &mat);
-
+    QImage matToQImage(const cv::Mat& mat) const;
 };
 
 #endif

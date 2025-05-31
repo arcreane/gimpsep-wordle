@@ -1,3 +1,4 @@
+
 #ifndef BACKGROUND_SEPARATOR_H
 #define BACKGROUND_SEPARATOR_H
 
@@ -11,20 +12,20 @@ using namespace cv;
 using namespace std;
 
 class BackgroundSeparator {
-    private:
-        Mat image, resultMask;
-        Rect selectedRect;
+private:
+    Mat image, resultMask;
+    Rect selectedRect;
 
-    public:
-        BackgroundSeparator();
+public:
+    BackgroundSeparator();
 
-        bool loadImage(const QString& path);
-        QImage getOriginalQImage() const;
-        void computeAutoSelection();
-        void apply();
-        Mat createImageWithAlpha() const;
-        QImage getResultQImage() const;
-        bool saveResult(const QString& path) const;
+    bool loadImage(const QString& path);
+    QImage getOriginalQImage() const;
+    void computeAutoSelection();
+    void apply();
+    Mat createImageWithAlpha() const;
+    QImage getResultQImage() const;
+    bool saveResult(const QString& path) const;
 };
 
-#endif 
+#endif

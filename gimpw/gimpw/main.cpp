@@ -11,6 +11,7 @@
 #include <QSpacerItem>
 #include <QSizePolicy>
 #include <QMovie>
+#include <QTimer>
 #include <opencv2/opencv.hpp>
 
 #include "canny_edge_detector.h"
@@ -21,6 +22,7 @@
 #include "video_manipulation.h"
 #include "panorama.h"
 #include "object_detector.h"
+
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -462,8 +464,122 @@ int main(int argc, char* argv[]) {
     faceDetectionPage->setLayout(faceDetectionLayout);
 
 
-	// ==== Video Manipulation Page ====
-    VideoManipulation* videoManipulationPage = new VideoManipulation;
+     // ==== Video Manipulation Page ====
+    QWidget* videoManipulationPage = new QWidget;
+    QVBoxLayout* videoLayout = new QVBoxLayout;
+
+    QLabel* videoLabel = new QLabel("No video loaded");
+    videoLabel->setAlignment(Qt::AlignCenter);
+    videoLabel->setMinimumSize(800, 500);
+    videoLabel->setStyleSheet("border: 1px solid #ccc; background: black;");
+
+    QLabel* videoStatusLabel = new QLabel("No video loaded");
+    videoStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* videoLoadButton = new QPushButton("📁 Load Video");
+    QPushButton* videoPlayButton = new QPushButton("▶️ Play");
+    QPushButton* videoPauseButton = new QPushButton("⏸️ Pause");
+    QPushButton* videoBackButton = new QPushButton("⬅️ Return to menu");
+
+    QSlider* videoFrameSlider = new QSlider(Qt::Horizontal);
+    videoFrameSlider->setEnabled(false);
+
+    QSlider* videoSpeedSlider = new QSlider(Qt::Horizontal);
+    videoSpeedSlider->setRange(10, 200);
+    videoSpeedSlider->setValue(100);
+
+    QLabel* videoFrameLabel = new QLabel("Frame:");          // 🔴 Correction : libellé pour la barre de frames
+    QLabel* videoSpeedLabel = new QLabel("Speed: x1.0");      // 🔴 Affiche le facteur de vitesse
+
+    VideoManipulation videoProcessor;
+    QTimer* videoTimer = new QTimer;
+
+    // Load video
+    QObject::connect(videoLoadButton, &QPushButton::clicked, [&]() {
+        QString filename = QFileDialog::getOpenFileName(&window, "Open Video", "./data/videos", "Video Files (*.avi *.mp4 *.mov)");
+        if (!filename.isEmpty() && videoProcessor.loadVideo(filename.toStdString())) {
+            videoLabel->setPixmap(QPixmap::fromImage(videoProcessor.getCurrentFrameQImage()).scaled(videoLabel->size(), Qt::KeepAspectRatio));
+            videoFrameSlider->setRange(0, videoProcessor.getTotalFrames() - 1);
+            videoFrameSlider->setEnabled(true);
+            videoStatusLabel->setText("✅ Video loaded");
+        } else {
+            videoStatusLabel->setText("❌ Failed to load video");
+        }
+    });
+
+    // Play video
+    QObject::connect(videoPlayButton, &QPushButton::clicked, [&]() {
+        videoTimer->start(33);
+    });
+
+    // Pause video
+    QObject::connect(videoPauseButton, &QPushButton::clicked, [&]() {
+        videoTimer->stop();
+    });
+
+    // Slider to move to a specific frame
+    QObject::connect(videoFrameSlider, &QSlider::valueChanged, [&](int value) {
+        if (videoProcessor.goToFrame(value)) {
+            videoLabel->setPixmap(QPixmap::fromImage(videoProcessor.getCurrentFrameQImage()).scaled(videoLabel->size(), Qt::KeepAspectRatio));
+        }
+    });
+
+    // Speed control
+    QObject::connect(videoSpeedSlider, &QSlider::valueChanged, [&](int value) {
+    int max = videoSpeedSlider->maximum();
+    int min = videoSpeedSlider->minimum();
+    double minSpeedFactor = 0.1;
+    double maxSpeedFactor = 3.0;
+
+    // interpolate linéairement de 0.1 à 3.0
+    double t = (value - min) / static_cast<double>(max - min);
+    double speedFactor = minSpeedFactor + t * (maxSpeedFactor - minSpeedFactor);
+
+    // set le speedFactor
+    videoProcessor.setSpeedFactor(speedFactor);
+    videoTimer->setInterval(static_cast<int>(33.0 / speedFactor));
+
+    // update l’affichage
+    videoSpeedLabel->setText("Speed: x" + QString::number(speedFactor, 'f', 1));
+});
+
+
+    // Timer: next frame
+    QObject::connect(videoTimer, &QTimer::timeout, [&]() {
+        if (videoProcessor.nextFrame()) {
+            videoFrameSlider->blockSignals(true);
+            videoFrameSlider->setValue(videoProcessor.getCurrentFrame());
+            videoFrameSlider->blockSignals(false);
+            videoLabel->setPixmap(QPixmap::fromImage(videoProcessor.getCurrentFrameQImage()).scaled(videoLabel->size(), Qt::KeepAspectRatio));
+        } else {
+            videoTimer->stop();
+        }
+    });
+
+    // Back button
+    QObject::connect(videoBackButton, &QPushButton::clicked, [&]() {
+        videoTimer->stop();
+        stackedWidget->setCurrentWidget(homePage);
+    });
+
+    // Layout (correction: bonne position des labels)
+    videoLayout->addWidget(videoBackButton);
+    videoLayout->addWidget(videoLoadButton);
+    videoLayout->addWidget(videoPlayButton);
+    videoLayout->addWidget(videoPauseButton);
+
+    // Ajoute le label "Frame" au-dessus de la barre de frames
+    videoLayout->addWidget(videoFrameLabel);
+    videoLayout->addWidget(videoFrameSlider);
+
+    // Ajoute le label "Speed: x1.0" au-dessus de la vraie barre de speed
+    videoLayout->addWidget(videoSpeedLabel);
+    videoLayout->addWidget(videoSpeedSlider);
+
+    videoLayout->addWidget(videoLabel);
+    videoLayout->addWidget(videoStatusLabel);
+    videoManipulationPage->setLayout(videoLayout);
+
 
     // ==== Panorama Page ====
     QWidget* panoramaPage = new QWidget;

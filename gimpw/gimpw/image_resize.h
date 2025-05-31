@@ -10,7 +10,7 @@ public:
     void resize(double scaleFactor);
     QImage getQImage() const;
     cv::Mat getResizedMat() const;
-    void setScaleFactor(double scale); // <== dans public
+    void setScaleFactor(double scale);
 
 
 private:
