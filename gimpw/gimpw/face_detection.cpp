@@ -27,7 +27,7 @@ void Detector::detectFacesCats(Mat& image)
         Mat faceROI = gray(face);  //get the face region 
 
         vector<Rect> smiles;  // detect the smiles
-        smile_cascade.detectMultiScale(faceROI, smiles, 1.7, 22, 0, Size(25, 25));
+        smile_cascade.detectMultiScale(faceROI, smiles, 1.7, 28, 0, Size(25, 25));
         Scalar color = !smiles.empty() ? Scalar(0, 255, 255) : Scalar(0, 0, 255); // choose the color for a smile if there is 
         string label = !smiles.empty() ? "Smile" : "Face";
         rectangle(image, face, color, 2); //draw a rectangular shae around the face 
@@ -48,6 +48,6 @@ void Detector::detectFacesCats(Mat& image)
 // function calling, and cloning of the original image
 Mat Detector::applyDetection(const Mat& input) {
     Mat image = input.clone(); // do a copy of the image to draw on it 
-    detectFacesCats(image, face_cascade, smile_cascade, cat_cascade); //apply detection
+    detectFacesCats(image); //apply detection
     return image;// return the image modified
 }
