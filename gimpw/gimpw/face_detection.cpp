@@ -13,6 +13,8 @@ bool Detector::loadClassifiers(const string& face_xml,
 }
 
 // apply detection on faces, smiles and cats
+
+
 void Detector::detectFacesCats(Mat& image)
 {
     Mat gray;  // convert the image on grey scale
@@ -48,6 +50,6 @@ void Detector::detectFacesCats(Mat& image)
 // function calling, and cloning of the original image
 Mat Detector::applyDetection(const Mat& input) {
     Mat image = input.clone(); // do a copy of the image to draw on it 
-    detectFacesCats(image, face_cascade, smile_cascade, cat_cascade); //apply detection
-    return image;// return the image modified
+    detectFacesCats(image); // apply detection
+    return image; // return the image modified
 }
