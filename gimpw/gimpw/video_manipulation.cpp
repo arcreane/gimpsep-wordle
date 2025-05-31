@@ -46,3 +46,32 @@ QImage VideoManipulation::matToQImage(const cv::Mat& mat) const {
         cv::cvtColor(mat, rgb, cv::COLOR_GRAY2RGB);
     return QImage((const uchar*)rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888).copy();
 }
+
+bool VideoManipulation::saveVideo(const std::string& outputPath) {
+    if (!video.isOpened()) return false;
+
+    cv::VideoWriter writer;
+
+    // Utilise H264 (avc1) au lieu de MJPG si dispo
+    int fourcc = cv::VideoWriter::fourcc('a', 'v', 'c', '1');  // codec H264 compatible .mov
+    double fps = video.get(cv::CAP_PROP_FPS) * speedFactor;
+    cv::Size frameSize(video.get(cv::CAP_PROP_FRAME_WIDTH),
+                       video.get(cv::CAP_PROP_FRAME_HEIGHT));
+
+    if (!writer.open(outputPath, fourcc, fps, frameSize, true)) {
+        return false;
+    }
+
+    // Revenir au début
+    video.set(cv::CAP_PROP_POS_FRAMES, 0);
+
+    cv::Mat frame;
+    while (video.read(frame)) {
+        if (frame.empty()) break;
+        writer.write(frame);
+    }
+
+    // Revenir à la frame actuelle après sauvegarde
+    video.set(cv::CAP_PROP_POS_FRAMES, currentFrame);
+    return true;
+}

@@ -464,7 +464,7 @@ int main(int argc, char* argv[]) {
     faceDetectionPage->setLayout(faceDetectionLayout);
 
 
-     // ==== Video Manipulation Page ====
+    // ==== Video Manipulation Page ====
     QWidget* videoManipulationPage = new QWidget;
     QVBoxLayout* videoLayout = new QVBoxLayout;
 
@@ -477,24 +477,29 @@ int main(int argc, char* argv[]) {
     videoStatusLabel->setAlignment(Qt::AlignCenter);
 
     QPushButton* videoLoadButton = new QPushButton("📁 Load Video");
-    QPushButton* videoPlayButton = new QPushButton("▶️ Play");
-    QPushButton* videoPauseButton = new QPushButton("⏸️ Pause");
+    QPushButton* videoPlayPauseButton = new QPushButton("▶️ Play");
+    QPushButton* videoSaveButton = new QPushButton("💾 Save Video");
     QPushButton* videoBackButton = new QPushButton("⬅️ Return to menu");
 
     QSlider* videoFrameSlider = new QSlider(Qt::Horizontal);
     videoFrameSlider->setEnabled(false);
 
     QSlider* videoSpeedSlider = new QSlider(Qt::Horizontal);
-    videoSpeedSlider->setRange(10, 200);
+    videoSpeedSlider->setRange(0, 300);  // x0 à x3 homogène
     videoSpeedSlider->setValue(100);
 
-    QLabel* videoFrameLabel = new QLabel("Frame:");          // 🔴 Correction : libellé pour la barre de frames
-    QLabel* videoSpeedLabel = new QLabel("Speed: x1.0");      // 🔴 Affiche le facteur de vitesse
+    // Ligne "Speed: x1,0"
+    QHBoxLayout* speedLayout = new QHBoxLayout;
+    QLabel* speedLabel = new QLabel("Speed:");
+    QLabel* videoSpeedValueLabel = new QLabel("x1,0");  // 1 décimale et virgule
+    speedLayout->addWidget(speedLabel);
+    speedLayout->addWidget(videoSpeedValueLabel);
+    speedLayout->addStretch();
 
     VideoManipulation videoProcessor;
     QTimer* videoTimer = new QTimer;
+    bool isPlaying = false;
 
-    // Load video
     QObject::connect(videoLoadButton, &QPushButton::clicked, [&]() {
         QString filename = QFileDialog::getOpenFileName(&window, "Open Video", "./data/videos", "Video Files (*.avi *.mp4 *.mov)");
         if (!filename.isEmpty() && videoProcessor.loadVideo(filename.toStdString())) {
@@ -507,44 +512,49 @@ int main(int argc, char* argv[]) {
         }
     });
 
-    // Play video
-    QObject::connect(videoPlayButton, &QPushButton::clicked, [&]() {
-        videoTimer->start(33);
+    QObject::connect(videoPlayPauseButton, &QPushButton::clicked, [&]() {
+        if (!isPlaying) {
+            videoTimer->start(33);
+            videoPlayPauseButton->setText("⏸️ Pause");
+            isPlaying = true;
+        } else {
+            videoTimer->stop();
+            videoPlayPauseButton->setText("▶️ Play");
+            isPlaying = false;
+        }
     });
 
-    // Pause video
-    QObject::connect(videoPauseButton, &QPushButton::clicked, [&]() {
-        videoTimer->stop();
+    QObject::connect(videoSaveButton, &QPushButton::clicked, [&]() {
+        QString path = QFileDialog::getSaveFileName(&window, "Save video", "./data/out", "Video Files (*.mov *.mp4)");
+        if (!path.isEmpty()) {
+            if (videoProcessor.saveVideo(path.toStdString())) {
+                videoStatusLabel->setText("💾 Video saved!");
+            } else {
+                videoStatusLabel->setText("❌ Failed to save video");
+            }
+        }
     });
 
-    // Slider to move to a specific frame
     QObject::connect(videoFrameSlider, &QSlider::valueChanged, [&](int value) {
         if (videoProcessor.goToFrame(value)) {
             videoLabel->setPixmap(QPixmap::fromImage(videoProcessor.getCurrentFrameQImage()).scaled(videoLabel->size(), Qt::KeepAspectRatio));
         }
     });
 
-    // Speed control
     QObject::connect(videoSpeedSlider, &QSlider::valueChanged, [&](int value) {
-    int max = videoSpeedSlider->maximum();
-    int min = videoSpeedSlider->minimum();
-    double minSpeedFactor = 0.1;
-    double maxSpeedFactor = 3.0;
+        double factor = value / 100.0;  // 0–3
+        videoProcessor.setSpeedFactor(factor);
 
-    // interpolate linéairement de 0.1 à 3.0
-    double t = (value - min) / static_cast<double>(max - min);
-    double speedFactor = minSpeedFactor + t * (maxSpeedFactor - minSpeedFactor);
+        QString speedText = "x" + QString::number(factor, 'f', 1);
+        videoSpeedValueLabel->setText(speedText);
 
-    // set le speedFactor
-    videoProcessor.setSpeedFactor(speedFactor);
-    videoTimer->setInterval(static_cast<int>(33.0 / speedFactor));
+        if (factor > 0.01) {
+            videoTimer->setInterval(static_cast<int>(33 / factor));
+        } else {
+            videoTimer->setInterval(1000);
+        }
+    });
 
-    // update l’affichage
-    videoSpeedLabel->setText("Speed: x" + QString::number(speedFactor, 'f', 1));
-});
-
-
-    // Timer: next frame
     QObject::connect(videoTimer, &QTimer::timeout, [&]() {
         if (videoProcessor.nextFrame()) {
             videoFrameSlider->blockSignals(true);
@@ -553,31 +563,33 @@ int main(int argc, char* argv[]) {
             videoLabel->setPixmap(QPixmap::fromImage(videoProcessor.getCurrentFrameQImage()).scaled(videoLabel->size(), Qt::KeepAspectRatio));
         } else {
             videoTimer->stop();
+            videoPlayPauseButton->setText("▶️ Play");
+            isPlaying = false;
         }
     });
 
-    // Back button
     QObject::connect(videoBackButton, &QPushButton::clicked, [&]() {
         videoTimer->stop();
+        videoPlayPauseButton->setText("▶️ Play");
+        isPlaying = false;
         stackedWidget->setCurrentWidget(homePage);
     });
 
-    // Layout (correction: bonne position des labels)
+    // Layout
     videoLayout->addWidget(videoBackButton);
     videoLayout->addWidget(videoLoadButton);
-    videoLayout->addWidget(videoPlayButton);
-    videoLayout->addWidget(videoPauseButton);
+    videoLayout->addWidget(videoPlayPauseButton);
+    videoLayout->addWidget(videoSaveButton);
 
-    // Ajoute le label "Frame" au-dessus de la barre de frames
-    videoLayout->addWidget(videoFrameLabel);
-    videoLayout->addWidget(videoFrameSlider);
-
-    // Ajoute le label "Speed: x1.0" au-dessus de la vraie barre de speed
-    videoLayout->addWidget(videoSpeedLabel);
+    videoLayout->addLayout(speedLayout);
     videoLayout->addWidget(videoSpeedSlider);
+
+    videoLayout->addWidget(new QLabel("Frame:"));
+    videoLayout->addWidget(videoFrameSlider);
 
     videoLayout->addWidget(videoLabel);
     videoLayout->addWidget(videoStatusLabel);
+
     videoManipulationPage->setLayout(videoLayout);
 
 
