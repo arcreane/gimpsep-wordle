@@ -2,13 +2,26 @@
 #define PANORAMA_H
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/stitching.hpp>
 #include <vector>
+#include <string>
+#include <iostream>
 
-//class to assemble multiple images for panorama 
+using namespace std;
+using namespace cv;
+
 class Panorama {
+private:
+    vector<Mat> images;
+    Mat panoramaResult;
+
 public:
-    // stiching function from images data base 
-    static cv::Mat stitchImages(const std::vector<cv::Mat>& images, bool& success);
+    bool loadImages(const string& path);
+    size_t getImagesLoadedCount() const;
+    void clearImages();
+    bool computePanorama();
+    Mat getPanoramaImage() const;
+	bool savePanoramaImage(const string& path) const;
 };
 
 #endif

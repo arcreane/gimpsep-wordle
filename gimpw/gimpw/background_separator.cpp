@@ -52,13 +52,27 @@ void BackgroundSeparator::computeAutoSelection() {
 
 // applies the grabCut algorithm to separate the foreground from the background
 void BackgroundSeparator::apply() {
-    if (image.empty() || selectedRect.width <= 0 || selectedRect.height <= 0) return;
+    if (image.empty()) return;
 
     Mat bgModel, fgModel;
     Mat mask(image.size(), CV_8UC1, Scalar(GC_BGD));
-    mask(selectedRect).setTo(Scalar(GC_PR_FGD));
 
-    grabCut(image, mask, selectedRect, bgModel, fgModel, 5, GC_INIT_WITH_RECT);
+    int borderSize = 2;
+    Rect innerRect = selectedRect;
+    innerRect.x += borderSize;
+    innerRect.y += borderSize;
+    innerRect.width -= 2 * borderSize;
+    innerRect.height -= 2 * borderSize;
+
+    if (innerRect.width > 0 && innerRect.height > 0) {
+        mask(innerRect).setTo(Scalar(GC_PR_FGD));
+    }
+    else {
+        mask(selectedRect).setTo(Scalar(GC_PR_FGD));
+    }
+
+    grabCut(image, mask, selectedRect, bgModel, fgModel, 5, GC_INIT_WITH_MASK);
+
     resultMask = (mask == GC_FGD) | (mask == GC_PR_FGD);
     resultMask.convertTo(resultMask, CV_8UC1, 255);
 }

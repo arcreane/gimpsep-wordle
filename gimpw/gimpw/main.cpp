@@ -19,6 +19,8 @@
 #include "image_resize.h"
 #include "face_detection.h"
 #include "video_manipulation.h"
+#include "panorama.h"
+#include "object_detector.h"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -69,6 +71,8 @@ int main(int argc, char* argv[]) {
     QPushButton* goToResizingPage = new QPushButton("↔️ Image Resizing");
     QPushButton* goToFaceDetectionPage = new QPushButton("😊 Face Detection");
     QPushButton* goToVideoManipulationPage = new QPushButton("🎞️ Video Manipulation");
+    QPushButton* goToPanoramaPage = new QPushButton("🌄 Panorama");
+    QPushButton* goToObjectDetectionPage = new QPushButton("🔲  Object Detection");
 
     QSpacerItem* spacerTop = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
     QSpacerItem* spacerBottom = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -81,6 +85,8 @@ int main(int argc, char* argv[]) {
     homeLayout->addWidget(goToResizingPage);
     homeLayout->addWidget(goToFaceDetectionPage);
     homeLayout->addWidget(goToVideoManipulationPage);
+	homeLayout->addWidget(goToPanoramaPage);
+	homeLayout->addWidget(goToObjectDetectionPage);
     homeLayout->addItem(spacerBottom);
     homePage->setLayout(homeLayout);
 
@@ -121,7 +127,7 @@ int main(int argc, char* argv[]) {
     };
 
     QObject::connect(cannyEdgeDetectionLoadButton, &QPushButton::clicked, [&]() {
-        QString fileName = QFileDialog::getOpenFileName(&window, "Load image", "", "Images (*.png *.jpg *.jpeg *.bmp)");
+        QString fileName = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!fileName.isEmpty()) {
             CannyEdgeDetector newDetector(fileName.toStdString(), lowerTSlider->value(), upperTSlider->value());
             detector = newDetector;
@@ -144,7 +150,7 @@ int main(int argc, char* argv[]) {
     });
 
     QObject::connect(cannyEdgeDetectionSaveButton, &QPushButton::clicked, [&]() {
-        QString filePath = QFileDialog::getSaveFileName(&window, "Save image", "", "Images (*.png *.jpg *.bmp)");
+        QString filePath = QFileDialog::getSaveFileName(&window, "Save image", "./data/out", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!filePath.isEmpty() && detector.saveEdgesImage(filePath.toStdString())) {
             cannyEdgeDetectionStatusLabel->setText("💾 Image correctly saved");
         }
@@ -169,6 +175,7 @@ int main(int argc, char* argv[]) {
     cannyEdgeDetectionPage->setLayout(cannyEdgeDetectionLayout);
 
     // ==== Morphology Page ====
+
     QWidget* morphologyPage = new QWidget;
     QVBoxLayout* morphologyLayout = new QVBoxLayout;
     QLabel* morphologyImageLabel = new QLabel;
@@ -186,12 +193,12 @@ int main(int argc, char* argv[]) {
     QPushButton* morphologyBackButton = new QPushButton("⬅️ Return to menu");
 
     QSlider* morphologySlider = new QSlider(Qt::Horizontal);
-
     morphologySlider->setRange(1, 20);
     morphologySlider->setValue(2);
 
     QLabel* morphologyKernelLabel = new QLabel("Kernel size: 2");
 
+    Morphology morphologyProcessor;
     Mat morphologyOriginalImage;
     Mat morphologyResult;
 
@@ -201,14 +208,14 @@ int main(int argc, char* argv[]) {
             return;
         }
         int size = morphologySlider->value();
-        morphologyResult = applyMorphology(morphologyOriginalImage, size, dilate);
+        morphologyResult = morphologyProcessor.applyMorphology(morphologyOriginalImage, size, dilate);
         QImage qimg((uchar*)morphologyResult.data, morphologyResult.cols, morphologyResult.rows, morphologyResult.step, QImage::Format_BGR888);
         morphologyImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(morphologyImageLabel->size(), Qt::KeepAspectRatio));
         morphologyStatusLabel->setText(dilate ? "✅ Dilation applied" : "✅ Erosion applied");
     };
 
     QObject::connect(morphologyLoadButton, &QPushButton::clicked, [&]() {
-        QString path = QFileDialog::getOpenFileName(&window, "Load image", "", "Images (*.png *.jpg *.bmp)");
+        QString path = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!path.isEmpty()) {
             morphologyOriginalImage = imread(path.toStdString());
             if (!morphologyOriginalImage.empty()) {
@@ -248,6 +255,7 @@ int main(int argc, char* argv[]) {
     morphologyLayout->addWidget(morphologyStatusLabel);
     morphologyPage->setLayout(morphologyLayout);
 
+
     // ==== Background Separation Page ====
     QWidget* backgroundSeparationPage = new QWidget;
     QVBoxLayout* backgroundSeparationLayout = new QVBoxLayout;
@@ -269,7 +277,7 @@ int main(int argc, char* argv[]) {
     QImage backgroundSeparationLoadedImage;
 
     QObject::connect(backgroundSeparationLoadButton, &QPushButton::clicked, [&]() {
-        QString path = QFileDialog::getOpenFileName(&window, "Load image", "", "Images (*.png *.jpg *.bmp)");
+        QString path = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!path.isEmpty() && backgroundSeparator.loadImage(path)) {
             backgroundSeparationLoadedImage = backgroundSeparator.getOriginalQImage();
             backgroundSeparationImageLabel->setPixmap(QPixmap::fromImage(backgroundSeparationLoadedImage).scaled(backgroundSeparationImageLabel->size(), Qt::KeepAspectRatio));
@@ -298,7 +306,7 @@ int main(int argc, char* argv[]) {
     });
 
     QObject::connect(backgroundSeparationSaveButton, &QPushButton::clicked, [&]() {
-        QString path = QFileDialog::getSaveFileName(&window, "Save image", "", "Images (*.png)");
+        QString path = QFileDialog::getSaveFileName(&window, "Save image", "./data/out", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!path.isEmpty() && backgroundSeparator.saveResult(path)) {
             backgroundSeparationStatusLabel->setText("💾 Image correctly saved");
         }
@@ -352,7 +360,7 @@ int main(int argc, char* argv[]) {
     };
 
     QObject::connect(resizingLoadButton, &QPushButton::clicked, [&]() {
-        QString fileName = QFileDialog::getOpenFileName(&window, "Select an image", "", "Images (*.png *.jpg *.jpeg *.bmp)");
+        QString fileName = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!fileName.isEmpty()) {
             Mat img = imread(fileName.toStdString());
 
@@ -373,7 +381,7 @@ int main(int argc, char* argv[]) {
     });
 
     QObject::connect(resizingSaveButton, &QPushButton::clicked, [&]() {
-        QString filePath = QFileDialog::getSaveFileName(&window, "Save image", "", "Images (*.png *.jpg *.bmp)");
+        QString filePath = QFileDialog::getSaveFileName(&window, "Save image", "./data/out", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!filePath.isEmpty()) {
             imwrite(filePath.toStdString(), imageResizer.getResizedMat());
             resizingStatusLabel->setText("💾 Image saved!");
@@ -412,8 +420,11 @@ int main(int argc, char* argv[]) {
     Mat faceDetectionOriginalImage;
     Mat faceDetectionDetectedImage;
 
+    Detector faceDetector;
+    faceDetector.loadClassifiers("data/haarcascades/haarcascade_frontalface_default.xml", "data/haarcascades/haarcascade_smile.xml", "data/haarcascades/haarcascade_frontalcatface.xml");
+
     QObject::connect(faceDetectionLoadButton, &QPushButton::clicked, [&]() {
-        QString path = QFileDialog::getOpenFileName(&window, "Load image", "", "Images (*.png *.jpg *.bmp)");
+        QString path = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
         if (!path.isEmpty()) {
             faceDetectionOriginalImage = imread(path.toStdString());
             if (!faceDetectionOriginalImage.empty()) {
@@ -429,7 +440,7 @@ int main(int argc, char* argv[]) {
 
     QObject::connect(faceDetectionDetectButton, &QPushButton::clicked, [&]() {
         if (!faceDetectionOriginalImage.empty()) {
-            faceDetectionDetectedImage = applyDetection(faceDetectionOriginalImage);
+            faceDetectionDetectedImage = faceDetector.applyDetection(faceDetectionOriginalImage);
             QImage qimg((uchar*)faceDetectionDetectedImage.data, faceDetectionDetectedImage.cols, faceDetectionDetectedImage.rows, faceDetectionDetectedImage.step, QImage::Format_BGR888);
             faceDetectionImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(faceDetectionImageLabel->size(), Qt::KeepAspectRatio));
             faceDetectionStatusLabel->setText("😊 Detection applied");
@@ -450,8 +461,155 @@ int main(int argc, char* argv[]) {
     faceDetectionLayout->addWidget(faceDetectionStatusLabel);
     faceDetectionPage->setLayout(faceDetectionLayout);
 
+
 	// ==== Video Manipulation Page ====
     VideoManipulation* videoManipulationPage = new VideoManipulation;
+
+    // ==== Panorama Page ====
+    QWidget* panoramaPage = new QWidget;
+    QVBoxLayout* panoramaLayout = new QVBoxLayout;
+
+    QLabel* panoramaImageLabel = new QLabel;
+    panoramaImageLabel->setAlignment(Qt::AlignCenter);
+    panoramaImageLabel->setMinimumSize(600, 400);
+    panoramaImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
+
+    QLabel* panoramaStatusLabel = new QLabel("No images loaded");
+    panoramaStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* panoramaLoadButton = new QPushButton("📁 Load images");
+    QPushButton* panoramaStitchButton = new QPushButton("🪄 Compute panorama");
+    QPushButton* panoramaSaveButton = new QPushButton("💾 Save panorama");
+    QPushButton* panoramaBackButton = new QPushButton("⬅️ Return to menu");
+
+    Panorama panoramaProcessor;
+
+    QObject::connect(panoramaLoadButton, &QPushButton::clicked, [&]() {
+        QStringList files = QFileDialog::getOpenFileNames(&window, "Load images", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (!files.isEmpty()) {
+            panoramaProcessor.clearImages();
+            for (const QString& file : files) {
+                panoramaProcessor.loadImages(file.toStdString());
+            }
+            panoramaStatusLabel->setText("✅ " + QString::number(panoramaProcessor.getImagesLoadedCount()) + " image(s) loaded");
+        }
+        else {
+            panoramaStatusLabel->setText("❌ No images loaded");
+        }
+    });
+
+    QObject::connect(panoramaStitchButton, &QPushButton::clicked, [&]() {
+        if (panoramaProcessor.getImagesLoadedCount() < 2) {
+            panoramaStatusLabel->setText("❗ Need at least two images");
+            return;
+        }
+        if (panoramaProcessor.computePanorama()) {
+            Mat panoramaResult = panoramaProcessor.getPanoramaImage();
+            QImage qimg((uchar*)panoramaResult.data, panoramaResult.cols, panoramaResult.rows, panoramaResult.step, QImage::Format_BGR888);
+            panoramaImageLabel->setPixmap(QPixmap::fromImage(qimg.rgbSwapped()).scaled(panoramaImageLabel->size(), Qt::KeepAspectRatio));
+            panoramaStatusLabel->setText("✅ Panorama created");
+        }
+        else {
+            panoramaStatusLabel->setText("❌ Computing of the panorama failed");
+        }
+    });
+
+    QObject::connect(panoramaSaveButton, &QPushButton::clicked, [&]() {
+        if (panoramaProcessor.getPanoramaImage().empty()) {
+            panoramaStatusLabel->setText("❗ No panorama to save");
+            return;
+        }
+        QString path = QFileDialog::getSaveFileName(&window, "Save image", "./data/out", "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (!path.isEmpty()) {
+            if (panoramaProcessor.savePanoramaImage(path.toStdString())) {
+                panoramaStatusLabel->setText("💾 Panorama saved");
+            }
+            else {
+                panoramaStatusLabel->setText("❌ Failed to save panorama");
+            }
+        }
+    });
+
+    QObject::connect(panoramaBackButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentWidget(homePage);
+    });
+
+    panoramaLayout->addWidget(panoramaBackButton);
+    panoramaLayout->addWidget(panoramaLoadButton);
+    panoramaLayout->addWidget(panoramaStitchButton);
+    panoramaLayout->addWidget(panoramaSaveButton);
+    panoramaLayout->addWidget(panoramaImageLabel);
+    panoramaLayout->addWidget(panoramaStatusLabel);
+    panoramaPage->setLayout(panoramaLayout);
+
+
+    // ==== Object Detection Page ====
+    QWidget* objectDetectionPage = new QWidget;
+    QVBoxLayout* objectDetectionLayout = new QVBoxLayout;
+
+    QLabel* objectDetectionImageLabel = new QLabel;
+    objectDetectionImageLabel->setAlignment(Qt::AlignCenter);
+    objectDetectionImageLabel->setMinimumSize(600, 400);
+    objectDetectionImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
+
+    QLabel* objectDetectionStatusLabel = new QLabel("No image loaded");
+    objectDetectionStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* objectDetectionLoadButton = new QPushButton("📁 Load image");
+    QPushButton* objectDetectionDetectButton = new QPushButton("🔎 Detect object");
+    QPushButton* objectDetectionBackButton = new QPushButton("⬅️ Return to menu");
+
+    Mat objectDetectionOriginalImage;
+    Mat objectDetectionDetectedImage;
+
+    string classFile = "data/yolo/coco.names";
+    string configFile = "data/yolo/yolov3.cfg";
+    string weightsFile = "data/yolo/yolov3.weights";
+
+    ObjectDetector objectDetector(classFile, configFile, weightsFile);
+    bool yoloLoaded = objectDetector.charger();
+
+    QObject::connect(objectDetectionLoadButton, &QPushButton::clicked, [&]() {
+        QString path = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (!path.isEmpty()) {
+            objectDetectionOriginalImage = imread(path.toStdString());
+            if (!objectDetectionOriginalImage.empty()) {
+                QImage qimg((uchar*)objectDetectionOriginalImage.data, objectDetectionOriginalImage.cols, objectDetectionOriginalImage.rows, objectDetectionOriginalImage.step, QImage::Format_BGR888);
+                objectDetectionImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(objectDetectionImageLabel->size(), Qt::KeepAspectRatio));
+                objectDetectionStatusLabel->setText("✅ Image loaded");
+            }
+            else {
+                objectDetectionStatusLabel->setText("❌ Failed to load image");
+            }
+        }
+    });
+
+    QObject::connect(objectDetectionDetectButton, &QPushButton::clicked, [&]() {
+        if (!yoloLoaded) {
+            objectDetectionStatusLabel->setText("❌ Object detector not loaded");
+            return;
+        }
+        if (objectDetectionOriginalImage.empty()) {
+            objectDetectionStatusLabel->setText("❗ No image loaded");
+            return;
+        }
+        objectDetectionDetectedImage = objectDetectionOriginalImage.clone();
+        objectDetector.detecter(objectDetectionDetectedImage);
+        QImage qimg((uchar*)objectDetectionDetectedImage.data, objectDetectionDetectedImage.cols, objectDetectionDetectedImage.rows, objectDetectionDetectedImage.step, QImage::Format_BGR888);
+        objectDetectionImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(objectDetectionImageLabel->size(), Qt::KeepAspectRatio));
+        objectDetectionStatusLabel->setText("✅ Object detected");
+    });
+
+    QObject::connect(objectDetectionBackButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentWidget(homePage);
+    });
+
+    objectDetectionLayout->addWidget(objectDetectionBackButton);
+    objectDetectionLayout->addWidget(objectDetectionLoadButton);
+    objectDetectionLayout->addWidget(objectDetectionDetectButton);
+    objectDetectionLayout->addWidget(objectDetectionImageLabel);
+    objectDetectionLayout->addWidget(objectDetectionStatusLabel);
+    objectDetectionPage->setLayout(objectDetectionLayout);
 
     // ==== Add pages to the Home Page ====
     stackedWidget->addWidget(homePage);       
@@ -461,6 +619,8 @@ int main(int argc, char* argv[]) {
     stackedWidget->addWidget(resizingPage);       
     stackedWidget->addWidget(faceDetectionPage);        
     stackedWidget->addWidget(videoManipulationPage); 
+	stackedWidget->addWidget(panoramaPage);
+	stackedWidget->addWidget(objectDetectionPage);
 
     QObject::connect(goToCannyEdgeDetectionPage, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(1);
@@ -484,6 +644,14 @@ int main(int argc, char* argv[]) {
 
     QObject::connect(goToVideoManipulationPage, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(6);
+    });
+
+	QObject::connect(goToPanoramaPage, &QPushButton::clicked, [&]() {
+		stackedWidget->setCurrentIndex(7);
+    });
+
+	QObject::connect(goToObjectDetectionPage, &QPushButton::clicked, [&]() {
+		stackedWidget->setCurrentIndex(8);
     });
 
     window.setLayout(new QVBoxLayout);

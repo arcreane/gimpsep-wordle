@@ -444,18 +444,6 @@ FodyWeavers.xsd
 # Pro Files
 *.pro
 
-# Images and videos
-*.jpg
-*.jpeg
-*.png
-*.bmp 
-*.gif 
-*.webp 
-*.heic 
-*.mp4
-*.mov 
-*.avi 
-
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
