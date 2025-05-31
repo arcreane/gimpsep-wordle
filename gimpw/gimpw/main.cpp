@@ -501,7 +501,7 @@ int main(int argc, char* argv[]) {
     bool isPlaying = false;
 
     QObject::connect(videoLoadButton, &QPushButton::clicked, [&]() {
-        QString filename = QFileDialog::getOpenFileName(&window, "Open Video", "./data/videos", "Video Files (*.avi *.mp4 *.mov)");
+        QString filename = QFileDialog::getOpenFileName(&window, "Open Video", "./data/videos", "Video Files (*.mov *.mp4)");
         if (!filename.isEmpty() && videoProcessor.loadVideo(filename.toStdString())) {
             videoLabel->setPixmap(QPixmap::fromImage(videoProcessor.getCurrentFrameQImage()).scaled(videoLabel->size(), Qt::KeepAspectRatio));
             videoFrameSlider->setRange(0, videoProcessor.getTotalFrames() - 1);
@@ -513,10 +513,18 @@ int main(int argc, char* argv[]) {
     });
 
     QObject::connect(videoPlayPauseButton, &QPushButton::clicked, [&]() {
-        if (!isPlaying) {
-            videoTimer->start(33);
-            videoPlayPauseButton->setText("⏸️ Pause");
-            isPlaying = true;
+    if (!isPlaying) {
+        // Avant de démarrer le timer, ajuste l’intervalle
+        double factor = videoProcessor.getSpeedFactor();
+        if (factor > 0.01) {
+            videoTimer->setInterval(static_cast<int>(33 / factor));
+        } else {
+            videoTimer->setInterval(1000);
+        }
+
+        videoTimer->start();
+        videoPlayPauseButton->setText("⏸️ Pause");
+        isPlaying = true;
         } else {
             videoTimer->stop();
             videoPlayPauseButton->setText("▶️ Play");
