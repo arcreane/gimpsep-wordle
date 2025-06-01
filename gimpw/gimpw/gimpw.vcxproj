@@ -162,6 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="background_separator.cpp" />
+    <ClCompile Include="brightness_adjuster.cpp" />
     <ClCompile Include="canny_edge_detector.cpp" />
     <ClCompile Include="face_detection.cpp" />
     <ClCompile Include="image_morphology.cpp" />
@@ -173,6 +174,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="background_separator.h" />
+    <ClInclude Include="brightness_adjuster.h" />
     <ClInclude Include="canny_edge_detector.h" />
     <ClInclude Include="face_detection.h" />
     <ClInclude Include="image_morphology.h" />

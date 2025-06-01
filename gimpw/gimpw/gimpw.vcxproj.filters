@@ -54,6 +54,9 @@
     <ClCompile Include="object_detector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="brightness_adjuster.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="canny_edge_detector.h">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="background_separator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="brightness_adjuster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

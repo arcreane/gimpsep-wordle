@@ -14,15 +14,15 @@
 #include <QTimer>
 #include <opencv2/opencv.hpp>
 
-#include "canny_edge_detector.h"
 #include "image_morphology.h"
-#include "background_separator.h"
 #include "image_resize.h"
-#include "face_detection.h"
-#include "video_manipulation.h"
+#include "brightness_adjuster.h"
+#include "canny_edge_detector.h"
 #include "panorama.h"
+#include "video_manipulation.h"
+#include "face_detection.h"
+#include "background_separator.h"
 #include "object_detector.h"
-
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
     QPushButton* goToVideoManipulationPage = new QPushButton("🎞️ Video Manipulation");
     QPushButton* goToPanoramaPage = new QPushButton("🌄 Panorama");
     QPushButton* goToObjectDetectionPage = new QPushButton("🔲  Object Detection");
+    QPushButton* goToBrightnessAdjusterPage = new QPushButton("💡 Adjust Brightness");
 
     QSpacerItem* spacerTop = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
     QSpacerItem* spacerBottom = new QSpacerItem(20, 100, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -89,8 +90,90 @@ int main(int argc, char* argv[]) {
     homeLayout->addWidget(goToVideoManipulationPage);
 	homeLayout->addWidget(goToPanoramaPage);
 	homeLayout->addWidget(goToObjectDetectionPage);
+    homeLayout->addWidget(goToBrightnessAdjusterPage);
     homeLayout->addItem(spacerBottom);
     homePage->setLayout(homeLayout);
+
+    // ==== Morphology Page ====
+
+    QWidget* morphologyPage = new QWidget;
+    QVBoxLayout* morphologyLayout = new QVBoxLayout;
+    QLabel* morphologyImageLabel = new QLabel;
+
+    morphologyImageLabel->setAlignment(Qt::AlignCenter);
+    morphologyImageLabel->setMinimumSize(600, 400);
+    morphologyImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
+
+    QLabel* morphologyStatusLabel = new QLabel("No image loaded");
+    morphologyStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* morphologyLoadButton = new QPushButton("📁 Load image");
+    QPushButton* morphologyDilateButton = new QPushButton("➕ Apply Dilation");
+    QPushButton* morphologyErodeButton = new QPushButton("➖ Apply Erosion");
+    QPushButton* morphologyBackButton = new QPushButton("⬅️ Return to menu");
+
+    QSlider* morphologySlider = new QSlider(Qt::Horizontal);
+    morphologySlider->setRange(1, 20);
+    morphologySlider->setValue(2);
+
+    QLabel* morphologyKernelLabel = new QLabel("Kernel size: 2");
+
+    Morphology morphologyProcessor;
+    Mat morphologyOriginalImage;
+    Mat morphologyResult;
+
+    auto updateMorphology = [&](bool dilate) {
+        if (morphologyOriginalImage.empty()) {
+            morphologyStatusLabel->setText("❗ No image loaded");
+            return;
+        }
+        int size = morphologySlider->value();
+        morphologyResult = morphologyProcessor.applyMorphology(morphologyOriginalImage, size, dilate);
+        QImage qimg((uchar*)morphologyResult.data, morphologyResult.cols, morphologyResult.rows, morphologyResult.step, QImage::Format_BGR888);
+        morphologyImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(morphologyImageLabel->size(), Qt::KeepAspectRatio));
+        morphologyStatusLabel->setText(dilate ? "✅ Dilation applied" : "✅ Erosion applied");
+    };
+
+    QObject::connect(morphologyLoadButton, &QPushButton::clicked, [&]() {
+        QString path = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (!path.isEmpty()) {
+            morphologyOriginalImage = imread(path.toStdString());
+            if (!morphologyOriginalImage.empty()) {
+                QImage qimg((uchar*)morphologyOriginalImage.data, morphologyOriginalImage.cols, morphologyOriginalImage.rows, morphologyOriginalImage.step, QImage::Format_BGR888);
+                morphologyImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(morphologyImageLabel->size(), Qt::KeepAspectRatio));
+                morphologyStatusLabel->setText("✅ Image loaded");
+            }
+            else {
+                morphologyStatusLabel->setText("❌ Failed to load image");
+            }
+        }
+    });
+
+    QObject::connect(morphologyDilateButton, &QPushButton::clicked, [&]() {
+        updateMorphology(true);
+    });
+
+    QObject::connect(morphologyErodeButton, &QPushButton::clicked, [&]() {
+        updateMorphology(false);
+    });
+
+    QObject::connect(morphologySlider, &QSlider::valueChanged, [&](int value) {
+        morphologyKernelLabel->setText("Kernel size: " + QString::number(value));
+    });
+
+    QObject::connect(morphologyBackButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentIndex(0);
+    });
+
+    morphologyLayout->addWidget(morphologyBackButton);
+    morphologyLayout->addWidget(morphologyLoadButton);
+    morphologyLayout->addWidget(morphologyDilateButton);
+    morphologyLayout->addWidget(morphologyErodeButton);
+    morphologyLayout->addWidget(morphologyKernelLabel);
+    morphologyLayout->addWidget(morphologySlider);
+    morphologyLayout->addWidget(morphologyImageLabel);
+    morphologyLayout->addWidget(morphologyStatusLabel);
+    morphologyPage->setLayout(morphologyLayout);
 
     // ==== Canny Edge Detection Page ====
     QWidget* cannyEdgeDetectionPage = new QWidget;
@@ -175,88 +258,6 @@ int main(int argc, char* argv[]) {
     cannyEdgeDetectionLayout->addWidget(cannyEdgeDetectionImageLabel);
     cannyEdgeDetectionLayout->addWidget(cannyEdgeDetectionStatusLabel);
     cannyEdgeDetectionPage->setLayout(cannyEdgeDetectionLayout);
-
-    // ==== Morphology Page ====
-
-    QWidget* morphologyPage = new QWidget;
-    QVBoxLayout* morphologyLayout = new QVBoxLayout;
-    QLabel* morphologyImageLabel = new QLabel;
-
-    morphologyImageLabel->setAlignment(Qt::AlignCenter);
-    morphologyImageLabel->setMinimumSize(600, 400);
-    morphologyImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
-
-    QLabel* morphologyStatusLabel = new QLabel("No image loaded");
-    morphologyStatusLabel->setAlignment(Qt::AlignCenter);
-
-    QPushButton* morphologyLoadButton = new QPushButton("📁 Load image");
-    QPushButton* morphologyDilateButton = new QPushButton("➕ Apply Dilation");
-    QPushButton* morphologyErodeButton = new QPushButton("➖ Apply Erosion");
-    QPushButton* morphologyBackButton = new QPushButton("⬅️ Return to menu");
-
-    QSlider* morphologySlider = new QSlider(Qt::Horizontal);
-    morphologySlider->setRange(1, 20);
-    morphologySlider->setValue(2);
-
-    QLabel* morphologyKernelLabel = new QLabel("Kernel size: 2");
-
-    Morphology morphologyProcessor;
-    Mat morphologyOriginalImage;
-    Mat morphologyResult;
-
-    auto updateMorphology = [&](bool dilate) {
-        if (morphologyOriginalImage.empty()) {
-            morphologyStatusLabel->setText("❗ No image loaded");
-            return;
-        }
-        int size = morphologySlider->value();
-        morphologyResult = morphologyProcessor.applyMorphology(morphologyOriginalImage, size, dilate);
-        QImage qimg((uchar*)morphologyResult.data, morphologyResult.cols, morphologyResult.rows, morphologyResult.step, QImage::Format_BGR888);
-        morphologyImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(morphologyImageLabel->size(), Qt::KeepAspectRatio));
-        morphologyStatusLabel->setText(dilate ? "✅ Dilation applied" : "✅ Erosion applied");
-    };
-
-    QObject::connect(morphologyLoadButton, &QPushButton::clicked, [&]() {
-        QString path = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
-        if (!path.isEmpty()) {
-            morphologyOriginalImage = imread(path.toStdString());
-            if (!morphologyOriginalImage.empty()) {
-                QImage qimg((uchar*)morphologyOriginalImage.data, morphologyOriginalImage.cols, morphologyOriginalImage.rows, morphologyOriginalImage.step, QImage::Format_BGR888);
-                morphologyImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(morphologyImageLabel->size(), Qt::KeepAspectRatio));
-                morphologyStatusLabel->setText("✅ Image loaded");
-            }
-            else {
-                morphologyStatusLabel->setText("❌ Failed to load image");
-            }
-        }
-    });
-
-    QObject::connect(morphologyDilateButton, &QPushButton::clicked, [&]() {
-        updateMorphology(true);
-    });
-
-    QObject::connect(morphologyErodeButton, &QPushButton::clicked, [&]() {
-        updateMorphology(false);
-    });
-
-    QObject::connect(morphologySlider, &QSlider::valueChanged, [&](int value) {
-        morphologyKernelLabel->setText("Kernel size: " + QString::number(value));
-    });
-
-    QObject::connect(morphologyBackButton, &QPushButton::clicked, [&]() {
-        stackedWidget->setCurrentIndex(0);
-    });
-
-    morphologyLayout->addWidget(morphologyBackButton);
-    morphologyLayout->addWidget(morphologyLoadButton);
-    morphologyLayout->addWidget(morphologyDilateButton);
-    morphologyLayout->addWidget(morphologyErodeButton);
-    morphologyLayout->addWidget(morphologyKernelLabel);
-    morphologyLayout->addWidget(morphologySlider);
-    morphologyLayout->addWidget(morphologyImageLabel);
-    morphologyLayout->addWidget(morphologyStatusLabel);
-    morphologyPage->setLayout(morphologyLayout);
-
 
     // ==== Background Separation Page ====
     QWidget* backgroundSeparationPage = new QWidget;
@@ -738,6 +739,83 @@ int main(int argc, char* argv[]) {
     objectDetectionLayout->addWidget(objectDetectionStatusLabel);
     objectDetectionPage->setLayout(objectDetectionLayout);
 
+    // ==== Brightness Adjuster Page ====
+    QWidget* brightnessAdjusterPage = new QWidget;
+    QVBoxLayout* brightnessLayout = new QVBoxLayout;
+    QLabel* brightnessImageLabel = new QLabel;
+    brightnessImageLabel->setAlignment(Qt::AlignCenter);
+    brightnessImageLabel->setMinimumSize(600, 400);
+    brightnessImageLabel->setStyleSheet("border: 1px solid #ccc; background: white;");
+
+    QLabel* brightnessStatusLabel = new QLabel("No image loaded");
+    brightnessStatusLabel->setAlignment(Qt::AlignCenter);
+
+    QPushButton* brightnessLoadButton = new QPushButton("📁 Load image");
+    QPushButton* brightnessSaveButton = new QPushButton("💾 Save image");
+    QPushButton* brightnessBackButton = new QPushButton("⬅️ Return to menu");
+
+    QSlider* brightnessSlider = new QSlider(Qt::Horizontal);
+    brightnessSlider->setRange(10, 300); 
+    brightnessSlider->setValue(100);
+
+    QLabel* brightnessFactorLabel = new QLabel("Brightness factor: 1.0");
+
+    cv::Mat brightnessOriginalImage;
+    cv::Mat brightnessAdjustedImage;
+
+    QObject::connect(brightnessLoadButton, &QPushButton::clicked, [&]() {
+        QString filePath = QFileDialog::getOpenFileName(&window, "Load image", "./data/images", "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (!filePath.isEmpty()) {
+            brightnessOriginalImage = cv::imread(filePath.toStdString());
+            if (brightnessOriginalImage.empty()) {
+                brightnessStatusLabel->setText("❌ Failed to load image");
+                return;
+            }
+            cv::cvtColor(brightnessOriginalImage, brightnessOriginalImage, cv::COLOR_BGR2RGB);
+            QImage qimg(brightnessOriginalImage.data, brightnessOriginalImage.cols, brightnessOriginalImage.rows, brightnessOriginalImage.step, QImage::Format_RGB888);
+            brightnessImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(brightnessImageLabel->size(), Qt::KeepAspectRatio));
+            brightnessStatusLabel->setText("✅ Image loaded");
+        }
+    });
+
+    QObject::connect(brightnessSlider, &QSlider::valueChanged, [&](int value) {
+        if (brightnessOriginalImage.empty()) return;
+        double factor = value / 100.0;
+        brightnessFactorLabel->setText("Brightness factor: " + QString::number(factor, 'f', 2));
+
+        BrightnessAdjuster adjuster(factor);
+        brightnessAdjustedImage = adjuster.adjust(brightnessOriginalImage);
+
+        QImage qimg(brightnessAdjustedImage.data, brightnessAdjustedImage.cols, brightnessAdjustedImage.rows, brightnessAdjustedImage.step, QImage::Format_RGB888);
+        brightnessImageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(brightnessImageLabel->size(), Qt::KeepAspectRatio));
+        brightnessStatusLabel->setText("✅ Brightness adjusted");
+    });
+
+    QObject::connect(brightnessSaveButton, &QPushButton::clicked, [&]() {
+        if (brightnessAdjustedImage.empty()) return;
+        QString savePath = QFileDialog::getSaveFileName(&window, "Save image", "./data/out", "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (!savePath.isEmpty()) {
+            cv::imwrite(savePath.toStdString(), cv::Mat(brightnessAdjustedImage));
+            brightnessStatusLabel->setText("💾 Image saved!");
+        }
+    });
+
+    QObject::connect(brightnessBackButton, &QPushButton::clicked, [&]() {
+        stackedWidget->setCurrentWidget(homePage);
+        brightnessSlider->setValue(100);
+        brightnessImageLabel->clear();
+        brightnessStatusLabel->setText("No image loaded");
+    });
+
+    brightnessLayout->addWidget(brightnessBackButton);
+    brightnessLayout->addWidget(brightnessLoadButton);
+    brightnessLayout->addWidget(brightnessSaveButton);
+    brightnessLayout->addWidget(brightnessFactorLabel);
+    brightnessLayout->addWidget(brightnessSlider);
+    brightnessLayout->addWidget(brightnessImageLabel);
+    brightnessLayout->addWidget(brightnessStatusLabel);
+    brightnessAdjusterPage->setLayout(brightnessLayout);
+
     // ==== Add pages to the Home Page ====
     stackedWidget->addWidget(homePage);       
     stackedWidget->addWidget(cannyEdgeDetectionPage);    
@@ -748,6 +826,7 @@ int main(int argc, char* argv[]) {
     stackedWidget->addWidget(videoManipulationPage); 
 	stackedWidget->addWidget(panoramaPage);
 	stackedWidget->addWidget(objectDetectionPage);
+	stackedWidget->addWidget(brightnessAdjusterPage);
 
     QObject::connect(goToCannyEdgeDetectionPage, &QPushButton::clicked, [&]() {
         stackedWidget->setCurrentIndex(1);
@@ -779,6 +858,10 @@ int main(int argc, char* argv[]) {
 
 	QObject::connect(goToObjectDetectionPage, &QPushButton::clicked, [&]() {
 		stackedWidget->setCurrentIndex(8);
+    });
+
+	QObject::connect(goToBrightnessAdjusterPage, &QPushButton::clicked, [&]() {
+		stackedWidget->setCurrentIndex(9);
     });
 
     window.setLayout(new QVBoxLayout);
