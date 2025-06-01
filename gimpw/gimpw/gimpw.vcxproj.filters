@@ -39,16 +39,19 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="background_separator.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="image_resize.cpp">
-      <Filter>Generated Files</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="background_separator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="panorama.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="video_manipulation.cpp">
-      <Filter>Generated Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\ConsoleApplication2\ConsoleApplication2\object_detector.cpp">
+    <ClCompile Include="object_detector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,13 +65,16 @@
     <ClInclude Include="image_morphology.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="background_separator.h">
-      <Filter>Generated Files</Filter>
+    <ClInclude Include="panorama.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="object_detector.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="image_resize.h">
-      <Filter>Generated Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\ConsoleApplication2\ConsoleApplication2\object_detector.h">
+    <ClInclude Include="background_separator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -79,5 +85,10 @@
     <CustomBuild Include="release\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="video_manipulation.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

@@ -463,7 +463,6 @@ int main(int argc, char* argv[]) {
     faceDetectionLayout->addWidget(faceDetectionStatusLabel);
     faceDetectionPage->setLayout(faceDetectionLayout);
 
-
     // ==== Video Manipulation Page ====
     QWidget* videoManipulationPage = new QWidget;
     QVBoxLayout* videoLayout = new QVBoxLayout;
@@ -485,13 +484,12 @@ int main(int argc, char* argv[]) {
     videoFrameSlider->setEnabled(false);
 
     QSlider* videoSpeedSlider = new QSlider(Qt::Horizontal);
-    videoSpeedSlider->setRange(0, 300);  // x0 à x3 homogène
+    videoSpeedSlider->setRange(0, 300); 
     videoSpeedSlider->setValue(100);
 
-    // Ligne "Speed: x1,0"
     QHBoxLayout* speedLayout = new QHBoxLayout;
     QLabel* speedLabel = new QLabel("Speed:");
-    QLabel* videoSpeedValueLabel = new QLabel("x1,0");  // 1 décimale et virgule
+    QLabel* videoSpeedValueLabel = new QLabel("x1,0"); 
     speedLayout->addWidget(speedLabel);
     speedLayout->addWidget(videoSpeedValueLabel);
     speedLayout->addStretch();
@@ -514,7 +512,6 @@ int main(int argc, char* argv[]) {
 
     QObject::connect(videoPlayPauseButton, &QPushButton::clicked, [&]() {
     if (!isPlaying) {
-        // Avant de démarrer le timer, ajuste l’intervalle
         double factor = videoProcessor.getSpeedFactor();
         if (factor > 0.01) {
             videoTimer->setInterval(static_cast<int>(33 / factor));
@@ -583,23 +580,17 @@ int main(int argc, char* argv[]) {
         stackedWidget->setCurrentWidget(homePage);
     });
 
-    // Layout
     videoLayout->addWidget(videoBackButton);
     videoLayout->addWidget(videoLoadButton);
     videoLayout->addWidget(videoPlayPauseButton);
     videoLayout->addWidget(videoSaveButton);
-
     videoLayout->addLayout(speedLayout);
     videoLayout->addWidget(videoSpeedSlider);
-
     videoLayout->addWidget(new QLabel("Frame:"));
     videoLayout->addWidget(videoFrameSlider);
-
     videoLayout->addWidget(videoLabel);
     videoLayout->addWidget(videoStatusLabel);
-
     videoManipulationPage->setLayout(videoLayout);
-
 
     // ==== Panorama Page ====
     QWidget* panoramaPage = new QWidget;

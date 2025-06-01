@@ -86,7 +86,7 @@ void ObjectDetector::detecter(Mat& image) {
         Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseline);
         int top = max(box.y, labelSize.height);
         rectangle(image, Point(box.x, top - labelSize.height - 10), Point(box.x + labelSize.width, top), Scalar(0, 255, 0), FILLED);
-        putText(image, label, Point(box.x, top - 5), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0), 1);
+        putText(image, label, Point(box.x, top - 5), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
     }
 }
 

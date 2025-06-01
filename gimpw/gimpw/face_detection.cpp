@@ -33,7 +33,7 @@ void Detector::detectFacesCats(Mat& image)
         string label = !smiles.empty() ? "Smile" : "Face";
         rectangle(image, face, color, 2); // draw a rectangular shae around the face 
         putText(image, label, Point(face.x, face.y - 5), // display 'face' above the face 
-            FONT_HERSHEY_SIMPLEX, 0.5, color, 1);
+            FONT_HERSHEY_SIMPLEX, 1, color, 2);
     }
 
     vector<Rect> cats; // detect if there is cat in the image 
@@ -42,7 +42,7 @@ void Detector::detectFacesCats(Mat& image)
     for (const Rect& cat : cats) { // if cat detected 
         rectangle(image, cat, Scalar(0, 255, 0), 2);  // draw a rectangular shape around the cat 
         putText(image, "Cat", Point(cat.x, cat.y - 5),  // display 'cat' above 
-            FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
+            FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
     }
 }
 
